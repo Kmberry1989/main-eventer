@@ -20,9 +20,10 @@ already written. Live at https://main-eventer.netlify.app.
   leaves blank are skipped, never conflicts.
 - **Saved events** — sign in with Google (studio accounts only) to save
   event records to Firestore, load them back, and delete them.
-- **Google push** — "Add to Google Calendar" creates the event on the
-  signed-in Google account's primary calendar; "Add row to Google Sheet"
-  appends the record to a configured sheet. Needs the OAuth setup below.
+- **Google push** — "Push to Google" sends the record to a Google Apps
+  Script web app, which appends the Sheet row and creates the Calendar
+  event (and triggers Make, if configured). Needs the Apps Script setup
+  below.
 - **Tutorial** — a short overlay on first open only (Close dismisses
   it for good). **Help** in fine print at the bottom opens the manual
   (`manual.html`).
@@ -34,6 +35,11 @@ Full documentation: `DOCUMENTATION.md` (same content as `manual.html`).
 - `index.html` — the whole app (single static page).
 - `manual.html` — the help/manual page.
 - `DOCUMENTATION.md` — the documentation.
+- `Code.gs` — the Google Apps Script web app (Sheet + Calendar push,
+  and the Make webhook trigger).
+- `MAKE_SCENARIO.md` — the Make scenario blueprint (social fan-out).
+- `DIRECT_API.md` — direct-API preparation (Facebook, Threads,
+  Google Business Profile).
 - `firestore.rules` — the Firestore rules for the project. The Firebase
   console is the source of truth for the live ruleset; this copy is kept
   in sync with it.
@@ -49,23 +55,50 @@ Full documentation: `DOCUMENTATION.md` (same content as `manual.html`).
 - The Netlify domain (`main-eventer.netlify.app`) is in the Firebase
   Auth authorized-domains list.
 
-## Google Calendar / Sheets push (one-time setup)
+## Hybrid setup (one-time)
 
-The push buttons need a Google OAuth client. Until it is set, they say
-what is still needed.
+The hybrid is three parts: Apps Script for Google, Make for the
+social fan-out, and the direct APIs underneath. The custom Google
+OAuth client approach is superseded — do not set one up.
 
-1. In Google Cloud Console, open the `fired-arts-dashboard` project.
-2. Enable the **Google Calendar API** and the **Google Sheets API**
-   (APIs & Services → Library).
-3. Create an **OAuth 2.0 Client ID** (APIs & Services → Credentials →
-   Create Credentials → OAuth client ID), type **Web application**.
-4. Add `https://main-eventer.netlify.app` to **Authorized JavaScript
-   origins**. No redirect URI is needed (the app uses a token client).
-5. Copy the client ID into `GOOGLE_OAUTH_CLIENT_ID` in `index.html`.
-6. For Sheets: create a sheet, copy its ID from its URL, and put it in
-   `GOOGLE_SHEET_ID` in `index.html`. The first row should be:
-   `title, date, weekday, start_time, end_time, price, ages, host,
-   location, description, link`.
+### 1. Apps Script — Google push
+
+Until this is set, the Push to Google button says what is still
+needed.
+
+1. Create a new Apps Script project (script.google.com) and paste
+   `Code.gs` in as the code.
+2. Set the script timezone to America/Indiana/Indianapolis:
+   Project Settings (gear icon) → Time zone.
+3. Fill in `SHEET_ID` and `CALENDAR_ID` in `Code.gs`. Create a blank
+   Google Sheet first and copy its ID from its URL; the Calendar ID
+   is in Calendar Settings → Integrate calendar.
+4. Optionally set `SECRET_KEY` and `MAKE_WEBHOOK_URL` in `Code.gs`.
+5. Deploy → New deployment → type Web app → Execute as: Me → Who
+   has access: Anyone → Deploy. Copy the Web app URL.
+6. Paste that URL into `APPS_SCRIPT_URL` in `index.html`. If a
+   `SECRET_KEY` is set in the script, paste the same value into
+   `APPS_SCRIPT_KEY` in `index.html`.
+
+### 2. Make — social fan-out
+
+See `MAKE_SCENARIO.md` for the full blueprint. In short: create a
+free Make account, build one scenario with a Custom Webhook trigger
+→ Router → Facebook Pages, Threads, and Google Business Profile
+post modules, copy the webhook URL into `MAKE_WEBHOOK_URL` in
+`Code.gs`, and switch the scenario on. Connect the Facebook Page,
+Threads account, and GBP location in Make when asked. The GBP branch
+needs Google's Basic API Access approval before it can post (see
+below).
+
+### 3. Direct APIs
+
+See `DIRECT_API.md`. In short: the Facebook Graph API and Threads
+API are realistic direct paths (single-user use needs no App Review);
+Google Business Profile needs the Basic API Access application
+(profile verified/active 60+ days, quota is 0 until approved).
+Instagram, Pinterest, and TikTok direct posting are out of scope
+(they need a media image first; TikTok is not worth it).
 
 ## Deploy
 

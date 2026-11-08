@@ -86,19 +86,15 @@
       <p>The <strong>Open in Google Calendar</strong> link and the <strong>Download .ics</strong> button need a name, date, and start time; otherwise they stay inactive.</p>
 
       <h2>Google push</h2>
-      <p>The <strong>Google</strong> card has two buttons that push the record straight to Google:</p>
-      <ul>
-        <li><strong>Add to Google Calendar</strong> &mdash; creates the event on the signed-in Google account&rsquo;s primary calendar (timezone America/Indiana/Indianapolis). Needs a name, date, and start time.</li>
-        <li><strong>Add row to Google Sheet</strong> &mdash; appends the record as a row to a configured sheet (same columns as the CSV download).</li>
-      </ul>
-      <p>These need a Google OAuth client. Until it is set, the buttons say what is still needed. One-time setup:</p>
+      <p>The <strong>Google</strong> card has one button, <strong>Push to Google</strong>, that sends the record to a Google Apps Script web app (<code>Code.gs</code>). The web app appends one row to a Google Sheet, creates a Google Calendar event, and (if configured) POSTs the event to a Make webhook, which fans it out to Facebook, Threads, and Google Business Profile. It runs as the script owner, so no sign-in is needed in the tool. The web app URL is <code>APPS_SCRIPT_URL</code> in <code>index.html</code>; the Sheet ID and Calendar ID live in <code>Code.gs</code>.</p>
+      <p>The button needs a name, date, and start time; without them it says so. If <code>APPS_SCRIPT_URL</code> is empty it says the web app URL is still needed. One-time setup:</p>
       <ol>
-        <li>In Google Cloud Console, open the <code>fired-arts-dashboard</code> project.</li>
-        <li>Enable the <strong>Google Calendar API</strong> and the <strong>Google Sheets API</strong> (APIs &amp; Services &rarr; Library).</li>
-        <li>Create an <strong>OAuth 2.0 Client ID</strong> (APIs &amp; Services &rarr; Credentials &rarr; Create Credentials &rarr; OAuth client ID), type <strong>Web application</strong>.</li>
-        <li>Add <code>https://main-eventer.netlify.app</code> to <strong>Authorized JavaScript origins</strong>. No redirect URI is needed (the app uses a token client).</li>
-        <li>Copy the client ID into <code>GOOGLE_OAUTH_CLIENT_ID</code> in <code>index.html</code>.</li>
-        <li>For Sheets: create a sheet, copy its ID from its URL, and put it in <code>GOOGLE_SHEET_ID</code> in <code>index.html</code>. The first row should be: <code>title, date, weekday, start_time, end_time, price, ages, host, location, description, link</code>.</li>
+        <li>Create a new Apps Script project (script.google.com) and paste <code>Code.gs</code> in as the code.</li>
+        <li>Set the script timezone to America/Indiana/Indianapolis: Project Settings &rarr; Time zone.</li>
+        <li>Fill in <code>SHEET_ID</code> and <code>CALENDAR_ID</code> in <code>Code.gs</code>. Create a blank Google Sheet first and copy its ID from its URL; the Calendar ID is in Calendar Settings &rarr; Integrate calendar.</li>
+        <li>Optionally set <code>SECRET_KEY</code> and <code>MAKE_WEBHOOK_URL</code> in <code>Code.gs</code>.</li>
+        <li>Deploy &rarr; New deployment &rarr; type Web app &rarr; Execute as: Me &rarr; Who has access: Anyone &rarr; Deploy. Copy the Web app URL.</li>
+        <li>Paste that URL into <code>APPS_SCRIPT_URL</code> in <code>index.html</code>. If a <code>SECRET_KEY</code> is set in the script, paste the same value into <code>APPS_SCRIPT_KEY</code> in <code>index.html</code>.</li>
       </ol>
 
       <h2>Check a post</h2>

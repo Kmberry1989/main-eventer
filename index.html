@@ -344,8 +344,7 @@
           <section class="card" id="googleCard">
             <h2>Google</h2>
             <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" id="meCalBtn" type="button">Add to Google Calendar</button>
-              <button class="btn plain" id="meSheetBtn" type="button">Add row to Google Sheet</button>
+              <button class="btn" id="meGoogleBtn" type="button">Push to Google</button>
             </div>
           </section>
 
@@ -586,7 +585,7 @@
       }
       function downloadIcs() {
         var r = getRecord();
-        if (!r.hasCore) return;
+        if (!(r.fTitle && r.dateObj && r.startMin != null)) return;
         var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
         var desc = (preById.gcal.textContent || "").replace(/\n/g, "\\n");
         var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Main Eventer//EN", "BEGIN:VEVENT",
@@ -892,7 +891,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
 /* ---------- Main Eventer: Firebase save/load + Google push ---------- */
 (function () {
@@ -908,19 +906,18 @@
     messagingSenderId: "369187068047",
     appId: "1:369187068047:web:1305bcbb9f93c2eaadb8fa"
   };
-  // Google OAuth client ID for Calendar/Sheets push. Set this after creating
-  // a Web OAuth client in Google Cloud Console (see README). Empty = the
-  // Google push buttons say what is still needed.
-  var GOOGLE_OAUTH_CLIENT_ID = "";
-  // Google Sheet to append event rows to. Empty = the Sheet button says
-  // what is still needed.
-  var GOOGLE_SHEET_ID = "";
+  // Google Apps Script web app URL for the Google push (see Code.gs and
+  // README). Empty = the Push to Google button says what is still needed.
+  // The Sheet ID and Calendar ID live in Code.gs, not here.
+  var APPS_SCRIPT_URL = "";
+  // Optional shared secret. If set, it must match SECRET_KEY in Code.gs.
+  // Leave empty unless a secret is set in the script.
+  var APPS_SCRIPT_KEY = "";
 
   var ALLOWLIST = ["kylematthewberry@gmail.com", "rochelleberry731@gmail.com"];
   var COLLECTION = "mainEvent_events";
 
   var auth = null, db = null, currentUser = null, loadedDocId = null;
-  var gisToken = null;
   var $ = function (id) { return document.getElementById(id); };
 
   function status(msg) { var el = $("meStatus"); if (el) el.textContent = msg; }
@@ -1039,67 +1036,38 @@
     }, function () { list.innerHTML = '<li class="me-empty">Could not load saved events.</li>'; });
   }
 
-  function isoLocal(d, mins) {
-    function p(n) { return (n < 10 ? "0" : "") + n; }
-    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(Math.floor(mins / 60)) + ":" + p(mins % 60) + ":00";
-  }
-
-  function requestGoogleToken(scopes, cb) {
-    if (!GOOGLE_OAUTH_CLIENT_ID) { status("Google push needs an OAuth client ID. See README."); return; }
-    if (typeof google === "undefined" || !google.accounts) { status("Google script did not load. Check the connection and reload."); return; }
-    var client = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_OAUTH_CLIENT_ID,
-      scope: scopes,
-      callback: function (resp) {
-        if (resp && resp.access_token) { gisToken = resp.access_token; cb(); }
-        else { status("Google sign-in was not completed."); }
-      }
-    });
-    client.requestAccessToken();
-  }
-
-  function pushToCalendar() {
+  function pushToGoogle() {
     var r = getRecord();
-    if (!(r.fTitle && r.dateObj && r.startMin != null)) { status("Add a name, date, and start time to add to Google Calendar."); return; }
-    requestGoogleToken("https://www.googleapis.com/auth/calendar.events", function () {
-      var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
-      var gcalPre = $("pre-gcal");
-      var body = {
-        summary: r.fTitle,
-        description: (gcalPre ? gcalPre.textContent : "") + (r.fLink ? "\n" + r.fLink : ""),
-        location: r.fLocation || undefined,
-        start: { dateTime: isoLocal(r.dateObj, r.startMin), timeZone: "America/Indiana/Indianapolis" },
-        end: { dateTime: isoLocal(r.dateObj, endMin), timeZone: "America/Indiana/Indianapolis" }
-      };
-      fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + gisToken, "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }).then(function (res) { return res.json(); }).then(function (data) {
-        status(data && data.htmlLink ? "Added to Google Calendar." : "Calendar add failed.");
-      }).catch(function () { status("Calendar add failed."); });
-    });
-  }
-
-  function pushToSheet() {
-    var r = getRecord();
-    if (!r.hasAny) { status("Nothing to add."); return; }
-    if (!GOOGLE_SHEET_ID) { status("Google Sheets needs a target sheet. See README."); return; }
-    requestGoogleToken("https://www.googleapis.com/auth/spreadsheets", function () {
-      var row = [r.fTitle,
-        r.dateObj ? MONTHS[r.dateObj.getMonth()] + " " + r.dateObj.getDate() + ", " + r.dateObj.getFullYear() : "",
-        r.dateObj ? DAYS[r.dateObj.getDay()] : "",
-        r.startMin != null ? fmtTime(r.startMin) : "",
-        r.endMin != null ? fmtTime(r.endMin) : "",
-        r.fPrice, r.fAges, r.fHost, r.fLocation, r.fDesc, r.fLink];
-      fetch("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(GOOGLE_SHEET_ID) + "/values/A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + gisToken, "Content-Type": "application/json" },
-        body: JSON.stringify({ values: [row] })
-      }).then(function (res) { return res.json(); }).then(function (data) {
-        status(data && data.updates ? "Row added to the sheet." : "Sheet add failed.");
-      }).catch(function () { status("Sheet add failed."); });
-    });
+    if (!(r.fTitle && r.dateObj && r.startMin != null)) { status("Add a name, date, and start time to push to Google."); return; }
+    if (!APPS_SCRIPT_URL) { status("Google push needs the Apps Script web app URL. See README."); return; }
+    var fbPre = $("pre-facebook"), thPre = $("pre-threads"), gcalPre = $("pre-gcal");
+    var payload = {
+      key: APPS_SCRIPT_KEY || "",
+      title: r.fTitle,
+      date: r.fDate,
+      startTime: r.fStart,
+      endTime: r.fEnd,
+      price: r.fPrice,
+      ages: r.fAges,
+      host: r.fHost,
+      location: r.fLocation,
+      description: r.fDesc,
+      link: r.fLink,
+      facebookText: fbPre ? fbPre.textContent : "",
+      threadsText: thPre ? thPre.textContent : "",
+      calendarDescription: gcalPre ? gcalPre.textContent : ""
+    };
+    // text/plain (not application/json) so the browser sends no CORS
+    // preflight, which Apps Script web apps do not answer. The body is
+    // still a JSON string; Code.gs parses it.
+    fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(function (res) { return res.json(); }).then(function (data) {
+      if (data && data.ok) { status("Pushed to Google."); }
+      else { status("Google push failed." + (data && data.error ? " " + data.error : "")); }
+    }).catch(function () { status("Google push failed."); });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -1109,10 +1077,8 @@
     if (saveBtn) saveBtn.addEventListener("click", saveEvent);
     var newBtn = $("meNewBtn");
     if (newBtn) newBtn.addEventListener("click", clearForm);
-    var calBtn = $("meCalBtn");
-    if (calBtn) calBtn.addEventListener("click", pushToCalendar);
-    var sheetBtn = $("meSheetBtn");
-    if (sheetBtn) sheetBtn.addEventListener("click", pushToSheet);
+    var googleBtn = $("meGoogleBtn");
+    if (googleBtn) googleBtn.addEventListener("click", pushToGoogle);
     var tut = $("tutBackdrop");
     if (tut) {
       var seenTut = false;

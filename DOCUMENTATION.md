@@ -78,30 +78,54 @@ need a name, date, and start time; otherwise they stay inactive.
 
 ## Google push
 
-The **Google** card has two buttons that push the record straight to
-Google:
+The **Google** card has one button, **Push to Google**, that sends
+the record to a Google Apps Script web app (`Code.gs`). The web app
+appends one row to a Google Sheet, creates a Google Calendar event,
+and (if configured) POSTs the event to a Make webhook, which fans it
+out to Facebook, Threads, and Google Business Profile. It runs as the
+script owner, so no sign-in is needed in the tool. The web app URL is
+`APPS_SCRIPT_URL` in `index.html`; the Sheet ID and Calendar ID live
+in `Code.gs`.
 
-- **Add to Google Calendar** — creates the event on the signed-in
-  Google account's primary calendar (timezone
-  America/Indiana/Indianapolis). Needs a name, date, and start time.
-- **Add row to Google Sheet** — appends the record as a row to a
-  configured sheet (same columns as the CSV download).
+- **Sheet row**: title, date, weekday, start time, end time, price,
+  ages, host, location, description, signup link, Facebook text,
+  Threads text, calendar description.
+- **Calendar event**: title, start/end time (end defaults to start +
+  1 hour), location, description (the generated calendar text plus
+  the signup link), timezone America/Indiana/Indianapolis.
+- **Guard**: the button needs a name, date, and start time; without
+  them it says so. If `APPS_SCRIPT_URL` is empty it says the web app
+  URL is still needed. A shared secret (`APPS_SCRIPT_KEY` /
+  `SECRET_KEY`) is optional; if set, the two must match.
+- **POST format**: `Content-Type: text/plain` (no CORS preflight —
+  Apps Script web apps do not answer preflights). The body is a JSON
+  string; `Code.gs` parses it.
+- **Failure**: if the Sheet write or Calendar creation fails, the
+  response says which one and why. The Make webhook is called only
+  after both succeed.
+- **Make**: the social fan-out is a Make scenario that watches for
+  the webhook the Apps Script calls. The full blueprint is in
+  `MAKE_SCENARIO.md`.
+- **Direct APIs**: the Facebook Graph API, Threads API, and Google
+  Business Profile Basic API Access are the underlying access. The
+  preparation doc is in `DIRECT_API.md`. The custom Google OAuth
+  client approach is superseded — do not set one up.
 
-These need a Google OAuth client. Until it is set, the buttons say what
-is still needed. One-time setup:
+One-time setup (see `README.md` for the short version):
 
-1. In Google Cloud Console, open the `fired-arts-dashboard` project.
-2. Enable the **Google Calendar API** and the **Google Sheets API**
-   (APIs & Services → Library).
-3. Create an **OAuth 2.0 Client ID** (APIs & Services → Credentials →
-   Create Credentials → OAuth client ID), type **Web application**.
-4. Add `https://main-eventer.netlify.app` to **Authorized JavaScript
-   origins**. No redirect URI is needed (the app uses a token client).
-5. Copy the client ID into `GOOGLE_OAUTH_CLIENT_ID` in `index.html`.
-6. For Sheets: create a sheet, copy its ID from its URL, and put it in
-   `GOOGLE_SHEET_ID` in `index.html`. The first row should be:
-   `title, date, weekday, start_time, end_time, price, ages, host,
-   location, description, link`.
+1. Create a new Apps Script project (script.google.com) and paste
+   `Code.gs` in as the code.
+2. Set the script timezone to America/Indiana/Indianapolis:
+   Project Settings → Time zone.
+3. Fill in `SHEET_ID` and `CALENDAR_ID` in `Code.gs`. Create a blank
+   Google Sheet first and copy its ID from its URL; the Calendar ID
+   is in Calendar Settings → Integrate calendar.
+4. Optionally set `SECRET_KEY` and `MAKE_WEBHOOK_URL` in `Code.gs`.
+5. Deploy → New deployment → type Web app → Execute as: Me → Who
+   has access: Anyone → Deploy. Copy the Web app URL.
+6. Paste that URL into `APPS_SCRIPT_URL` in `index.html`. If a
+   `SECRET_KEY` is set in the script, paste the same value into
+   `APPS_SCRIPT_KEY` in `index.html`.
 
 ## Check a post
 
