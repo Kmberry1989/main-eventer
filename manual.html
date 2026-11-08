@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Main Eventer — Help</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #faf6f1;
+        --surface: #ffffff;
+        --ink: #2b2118;
+        --ink-soft: #5d4f42;
+        --line: #ddd0c0;
+        --accent: #a44a24;
+        --shadow: 0 1px 2px rgba(60, 38, 20, .06), 0 8px 24px rgba(60, 38, 20, .06);
+        --radius: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1d1712;
+          --surface: #2a211a;
+          --ink: #f2e9df;
+          --ink-soft: #c4b3a1;
+          --line: #4a3a2d;
+          --accent: #e07a45;
+          --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+        }
+      }
+      html { -webkit-text-size-adjust: 100%; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Public Sans", system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.55; }
+      h1, h2, p, ul, ol { margin: 0; }
+      .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
+      h1 { font-family: "Lora", Georgia, serif; font-size: clamp(28px, 5vw, 38px); font-weight: 700; line-height: 1.15; }
+      h2 { font-family: "Lora", Georgia, serif; font-size: 21px; font-weight: 600; margin-top: 28px; }
+      p, li { margin-top: 8px; }
+      ul, ol { padding-left: 22px; }
+      code { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 14px; }
+      .back { display: inline-block; margin-top: 8px; color: var(--accent); font-weight: 600; text-decoration: none; }
+      .back:hover { text-decoration: underline; }
+      blockquote { margin: 10px 0 0; padding: 10px 14px; border-left: 3px solid var(--line); color: var(--ink-soft); }
+      .fineprint { text-align: center; font-size: 12px; color: var(--ink-soft); margin-top: 44px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Main Eventer — Help</h1>
+      <p><a class="back" href="index.html">&larr; Back to Main Eventer</a></p>
+
+      <p style="margin-top:16px;">Main Eventer is Fired Arts Studio&rsquo;s event-uniformity tool. One event record produces matching copy for every channel, and any text already written can be checked against that record, field by field.</p>
+
+      <h2>The event record</h2>
+      <p>The form is the event record. Every output on the page reads from it. All fields are optional &mdash; nothing is required to save or generate. When a field is left blank, it is omitted from the generated outputs: no empty labels, no stray punctuation, no blank lines where the detail would have gone.</p>
+      <ul>
+        <li><strong>Event name</strong> &mdash; the event&rsquo;s title. Flagged when blank.</li>
+        <li><strong>Date</strong> &mdash; the event date. Flagged when blank.</li>
+        <li><strong>Start time</strong> &mdash; when the event begins. Flagged when blank.</li>
+        <li><strong>End time</strong> &mdash; when the event ends. Flagged when blank.</li>
+        <li><strong>Price</strong> &mdash; what it costs (for example <code>$25</code>, <code>$45</code>, <code>Free</code>). Flagged when blank.</li>
+        <li><strong>Ages</strong> &mdash; who it is for (for example <code>6-12</code>, <code>18+</code>). Flagged when blank.</li>
+        <li><strong>Host</strong> &mdash; the person hosting the event (host or hostess, just a name).</li>
+        <li><strong>Location</strong> &mdash; where it happens (for example <code>111 W Sycamore St, Kokomo</code>).</li>
+        <li><strong>Description</strong> &mdash; a short description of the event.</li>
+        <li><strong>Link</strong> &mdash; the registration or event page link.</li>
+      </ul>
+      <p><strong>Canonical line.</strong> Below the form, the canonical line is the record reduced to one line: name, date, times, host, price, ages, location &mdash; joined with &middot;. It is the single line every channel&rsquo;s copy is built from.</p>
+      <p><strong>Caution flags.</strong> When an important field is left blank, a warning triangle (&#9888;) appears next to its label and the field&rsquo;s border turns amber: name, date, start time, end time, price, ages. Host, location, description, and link do not get a flag. The flag is a warning only &mdash; it never blocks saving or generating.</p>
+
+      <h2>Outputs</h2>
+      <p>Each channel&rsquo;s text is generated from the record and shown in its own card, with a <strong>Copy</strong> button:</p>
+      <ul>
+        <li><strong>Google Calendar</strong> &mdash; event description for the calendar, plus an <strong>Open in Google Calendar</strong> link and a <strong>Download .ics</strong> button.</li>
+        <li><strong>Website listing</strong> &mdash; title, date and times, price, ages, host, location, description, registration link.</li>
+        <li><strong>Facebook post</strong> &mdash; title with short date and time, description, details, registration link.</li>
+        <li><strong>Instagram caption</strong> &mdash; title with short date and time, description, details, &ldquo;Link in bio to register&rdquo;, and the hashtags <code>#FiredArtsStudio #KokomoIN #PaintYourOwnPottery</code>.</li>
+        <li><strong>Threads post</strong> &mdash; title, short date and time, price, ages, host, link, joined with &middot;.</li>
+        <li><strong>TikTok caption</strong> &mdash; title, short date and time, location, host, registration link, and the hashtags <code>#FiredArtsStudio #KokomoIN #PYOP</code>.</li>
+        <li><strong>Pinterest description</strong> &mdash; title with long date, description, details, link.</li>
+        <li><strong>Flyer text</strong> &mdash; title in capitals, long date, time range, price, ages, host, location, link. This is the text to put on a graphic.</li>
+      </ul>
+      <p><strong>Download CSV</strong> downloads one CSV row of the record (columns: title, date, weekday, start time, end time, price, ages, host, location, description, link) for Canva bulk create.</p>
+      <p>The <strong>Open in Google Calendar</strong> link and the <strong>Download .ics</strong> button need a name, date, and start time; otherwise they stay inactive.</p>
+
+      <h2>Google push</h2>
+      <p>The <strong>Google</strong> card has two buttons that push the record straight to Google:</p>
+      <ul>
+        <li><strong>Add to Google Calendar</strong> &mdash; creates the event on the signed-in Google account&rsquo;s primary calendar (timezone America/Indiana/Indianapolis). Needs a name, date, and start time.</li>
+        <li><strong>Add row to Google Sheet</strong> &mdash; appends the record as a row to a configured sheet (same columns as the CSV download).</li>
+      </ul>
+      <p>These need a Google OAuth client. Until it is set, the buttons say what is still needed. One-time setup:</p>
+      <ol>
+        <li>In Google Cloud Console, open the <code>fired-arts-dashboard</code> project.</li>
+        <li>Enable the <strong>Google Calendar API</strong> and the <strong>Google Sheets API</strong> (APIs &amp; Services &rarr; Library).</li>
+        <li>Create an <strong>OAuth 2.0 Client ID</strong> (APIs &amp; Services &rarr; Credentials &rarr; Create Credentials &rarr; OAuth client ID), type <strong>Web application</strong>.</li>
+        <li>Add <code>https://main-eventer.netlify.app</code> to <strong>Authorized JavaScript origins</strong>. No redirect URI is needed (the app uses a token client).</li>
+        <li>Copy the client ID into <code>GOOGLE_OAUTH_CLIENT_ID</code> in <code>index.html</code>.</li>
+        <li>For Sheets: create a sheet, copy its ID from its URL, and put it in <code>GOOGLE_SHEET_ID</code> in <code>index.html</code>. The first row should be: <code>title, date, weekday, start_time, end_time, price, ages, host, location, description, link</code>.</li>
+      </ol>
+
+      <h2>Check a post</h2>
+      <p>Paste the text of anything already written or already live &mdash; a website listing, a caption, the words on a flyer &mdash; pick where the text lives, and run <strong>Check it</strong>. Each field is compared against the record and flagged <strong>Match</strong>, <strong>Conflict</strong>, or <strong>Not stated</strong>:</p>
+      <ul>
+        <li><strong>Date</strong> &mdash; month and day.</li>
+        <li><strong>Day of week</strong> &mdash; the weekday the record&rsquo;s date falls on.</li>
+        <li><strong>Times</strong> &mdash; start and end times. A PM time where the record says AM (or the reverse) is a conflict.</li>
+        <li><strong>Price</strong> &mdash; dollar amounts, or <code>Free</code>.</li>
+        <li><strong>Ages</strong> &mdash; the age range.</li>
+        <li><strong>Host</strong> &mdash; a name after <code>Host:</code>, <code>Host</code>, or <code>Hosted by</code>.</li>
+      </ul>
+      <p>A field the pasted text never states is flagged <strong>Not stated</strong>, not passed: a post that omits the time can&rsquo;t conflict with it, but it can&rsquo;t confirm it either. A field the record leaves blank is skipped the same way &mdash; it shows as <strong>Not stated</strong>, never as a conflict.</p>
+      <p>The verdict line reads <strong>Uniform.</strong> when every stated field matches, <strong>N conflicts with the record.</strong> when anything disagrees, or <strong>No conflicts &mdash; M fields match, N not stated.</strong> when nothing conflicts but something was left out.</p>
+
+      <h2>Saved events</h2>
+      <p><strong>Sign in with Google</strong> (top of the page) signs in with a Google account. Only the studio accounts can save: <code>kylematthewberry@gmail.com</code> and <code>rochelleberry731@gmail.com</code>. The same allowlist is enforced by the Firestore rules.</p>
+      <ul>
+        <li><strong>Save event</strong> saves the current record to Firestore (collection <code>mainEvent_events</code>, project <code>fired-arts-dashboard</code>). Saving a record that is already loaded updates it; saving a new one creates it.</li>
+        <li><strong>Saved events</strong> lists the saved records. Tap one to load it into the form. <strong>Delete</strong> removes it.</li>
+        <li><strong>New event</strong> clears the form.</li>
+      </ul>
+
+      <h2>Tutorial and Help</h2>
+      <p>The first time the tool is opened, a short tutorial overlay appears: enter the event once, copy the matching posts and calendar event, check live posts against the record. It has a <strong>Close</strong> button and does not reappear after being dismissed.</p>
+      <p>A small <strong>Help</strong> link sits in fine print at the bottom of the page. It opens this manual.</p>
+
+      <h2>Deploy</h2>
+      <ul>
+        <li>Site: Netlify, from this repo. Publish directory is the repo root.</li>
+        <li>The Netlify badge (&ldquo;Powered by Netlify&rdquo;) is off: it is opt-in in Netlify site settings and is not enabled for this site. If it ever appears, turn it off in Site settings &rarr; General &rarr; Site details.</li>
+        <li>Firebase project: <code>fired-arts-dashboard</code> (shared with Arts Fired). The Netlify domain (<code>main-eventer.netlify.app</code>) is in the Firebase Auth authorized-domains list.</li>
+      </ul>
+
+      <h2>Text removed from the UI</h2>
+      <p>The following text used to appear in the tool and was moved here on 2026-11-08, so the UI carries only labels, buttons, and output:</p>
+      <blockquote>&ldquo;Enter an event once. Every channel&rsquo;s copy is generated from that single record &mdash; and any post already written can be checked against it, field by field, before it goes out.&rdquo;</blockquote>
+      <blockquote>&ldquo;This is the source of truth. Everything on this page reads from it.&rdquo;</blockquote>
+      <blockquote>&ldquo;Tap one to load it. Saving needs sign-in.&rdquo;</blockquote>
+      <blockquote>&ldquo;Copy a channel&rsquo;s text and paste it into that channel. Nothing is typed twice, so nothing can disagree.&rdquo;</blockquote>
+      <blockquote>&ldquo;Push this record straight to Google Calendar or a Google Sheet.&rdquo;</blockquote>
+      <blockquote>&ldquo;Paste the text of anything already written or already live &mdash; a website listing, a caption, the words on a flyer &mdash; and it gets compared field by field.&rdquo;</blockquote>
+      <blockquote>&ldquo;Checks date, day of week, start and end times, price, and ages. A field the pasted text never states is flagged &ldquo;not stated&rdquo; rather than passed &mdash; a post that omits the time can&rsquo;t conflict with it, but it can&rsquo;t confirm it either.&rdquo;</blockquote>
+      <blockquote>&ldquo;Fill in the record and the canonical line appears here.&rdquo;</blockquote>
+      <blockquote>&ldquo;Fill in the name, date, and start time, and the canonical line appears here.&rdquo;</blockquote>
+      <blockquote>&ldquo;Waiting on the record &mdash; name, date, and start time.&rdquo;</blockquote>
+      <blockquote>&ldquo;Sign in to save events&rdquo; (the sign-in label when signed out).</blockquote>
+      <blockquote>&ldquo;Download CSV row (Canva bulk create)&rdquo; (button, now &ldquo;Download CSV&rdquo;).</blockquote>
+      <blockquote>&ldquo;Fill in the event record first &mdash; name, date, and start time &mdash; then run the check.&rdquo;</blockquote>
+      <blockquote>&ldquo;Paste the {channel} text first, then run the check.&rdquo;</blockquote>
+      <blockquote>&ldquo;N conflicts with the record in the {channel} text. Fix the text &mdash; or, if the text is right, fix the record and regenerate everything from it.&rdquo;</blockquote>
+      <blockquote>&ldquo;No conflicts in the {channel} text &mdash; M fields match, N fields are not stated and can&rsquo;t be confirmed.&rdquo;</blockquote>
+      <blockquote>&ldquo;Uniform. Every stated field in the {channel} text matches the record.&rdquo;</blockquote>
+      <blockquote>&ldquo;Fill in the name, date, and start time first.&rdquo; (save / Google push guard)</blockquote>
+
+      <p class="fineprint"><a href="index.html">Back to Main Eventer</a></p>
+    </div>
+  </body>
+</html>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
-    <title>Main Event</title>
+    <title>Main Eventer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -146,7 +146,6 @@
         text-transform: uppercase; color: var(--accent); margin-bottom: 3px;
       }
       .canon .v { font-weight: 600; }
-      .canon .empty { color: var(--ink-soft); font-weight: 400; font-style: italic; }
 
       .out-head {
         display: flex; align-items: baseline; justify-content: space-between;
@@ -240,18 +239,27 @@
       .me-saved:hover { text-decoration: underline; }
       .me-empty { color: var(--ink-soft); font-size: 14.5px; }
       .me-del { padding: 6px 10px; font-size: 13px; }
+      .field.flag label::after { content: " \26A0"; color: var(--warn); }
+      .field.flag input, .field.flag textarea { border-color: var(--warn); }
+      .fineprint { text-align: center; font-size: 12px; color: var(--ink-soft); margin-top: 44px; }
+      .fineprint a { color: inherit; }
+      .tut-backdrop { position: fixed; inset: 0; background: rgba(20,12,6,.55); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+      .tut-backdrop.show { display: flex; }
+      .tut-card { background: var(--surface); color: var(--ink); border-radius: 14px; max-width: 420px; width: 100%; padding: 22px; box-shadow: var(--shadow); }
+      .tut-card h2 { font-family: "Lora", Georgia, serif; font-size: 22px; margin-bottom: 10px; }
+      .tut-card ol { margin: 0 0 16px; padding-left: 22px; line-height: 1.6; }
+      .tut-card li + li { margin-top: 6px; }
     </style>
   </head>
   <body>
     <div class="wrap">
       <header class="page nonsel">
-        <h1>Main Event</h1>
-        <p>Enter an event once. Every channel&rsquo;s copy is generated from that single record &mdash; and any post already written can be checked against it, field by field, before it goes out.</p>
+        <h1>Main Eventer</h1>
       </header>
 
       <section class="card me-auth">
         <div class="me-auth-row">
-          <p id="meAuthLabel" style="font-weight:600;">Sign in to save events</p>
+          <p id="meAuthLabel" style="font-weight:600;"></p>
           <button class="btn" id="meAuthBtn" type="button">Sign in with Google</button>
         </div>
         <p class="note" id="meStatus"></p>
@@ -260,12 +268,15 @@
       <div class="cols">
         <div>
         <form class="card record" id="recordForm" autocomplete="off">
-          <h2>The event record</h2>
-          <p class="sub">This is the source of truth. Everything on this page reads from it.</p>
+          <h2>Event</h2>
 
           <div class="field">
             <label for="fTitle">Event name</label>
             <input id="fTitle" type="text" />
+          </div>
+          <div class="field">
+            <label for="fHost">Host</label>
+            <input id="fHost" type="text" />
           </div>
           <div class="field">
             <label for="fDate">Date</label>
@@ -300,18 +311,17 @@
             <textarea id="fDesc"></textarea>
           </div>
           <div class="field">
-            <label for="fLink">Registration / event page link</label>
+            <label for="fLink">Link</label>
             <input id="fLink" type="url" inputmode="url" />
           </div>
 
           <div class="canon nonsel">
             <div class="k">Canonical line</div>
-            <div class="v" id="canonLine"><span class="empty">Fill in the record and the canonical line appears here.</span></div>
+            <div class="v" id="canonLine"></div>
           </div>
         </form>
         <section class="card" id="savedCard">
           <h2>Saved events</h2>
-          <p class="sub">Tap one to load it. Saving needs sign-in.</p>
           <ul class="me-list" id="meSavedList"><li class="me-empty">Sign in to see saved events.</li></ul>
           <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn" id="meSaveBtn" type="button">Save event</button>
@@ -324,17 +334,15 @@
           <section class="card">
             <div class="out-head">
               <div>
-                <h2>Generated from the record</h2>
-                <p class="sub">Copy a channel&rsquo;s text and paste it into that channel. Nothing is typed twice, so nothing can disagree.</p>
+                <h2>Outputs</h2>
               </div>
-              <button class="btn ghost" id="csvBtn" type="button">Download CSV row (Canva bulk create)</button>
+              <button class="btn ghost" id="csvBtn" type="button">Download CSV</button>
             </div>
             <div class="out-grid" id="outGrid"></div>
           </section>
 
           <section class="card" id="googleCard">
             <h2>Google</h2>
-            <p class="sub">Push this record straight to Google Calendar or a Google Sheet.</p>
             <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn" id="meCalBtn" type="button">Add to Google Calendar</button>
               <button class="btn plain" id="meSheetBtn" type="button">Add row to Google Sheet</button>
@@ -342,8 +350,7 @@
           </section>
 
           <section class="card">
-            <h2>Check a post against the record</h2>
-            <p class="sub">Paste the text of anything already written or already live &mdash; a website listing, a caption, the words on a flyer &mdash; and it gets compared field by field.</p>
+            <h2>Check a post</h2>
             <div class="check-controls">
               <div class="field" style="margin-top:0">
                 <label for="channelSel">Where this text lives</label>
@@ -369,16 +376,28 @@
             </div>
             <div class="verdict" id="verdict"></div>
             <div class="results" id="results"></div>
-            <p class="note">Checks date, day of week, start and end times, price, and ages. A field the pasted text never states is flagged &ldquo;not stated&rdquo; rather than passed &mdash; a post that omits the time can&rsquo;t conflict with it, but it can&rsquo;t confirm it either.</p>
           </section>
         </div>
+      </div>
+      <footer class="fineprint nonsel"><a href="manual.html">Help</a></footer>
+    </div>
+
+    <div class="tut-backdrop" id="tutBackdrop">
+      <div class="tut-card" role="dialog" aria-label="Main Eventer tutorial">
+        <h2>Main Eventer</h2>
+        <ol>
+          <li>Enter the event once.</li>
+          <li>Copy the matching posts and calendar event.</li>
+          <li>Check live posts against the record.</li>
+        </ol>
+        <button class="btn" id="tutClose" type="button">Close</button>
       </div>
     </div>
 
     <script>
       "use strict";
       var $ = function (id) { return document.getElementById(id); };
-      var FIELDS = ["fTitle", "fDate", "fStart", "fEnd", "fPrice", "fAges", "fLocation", "fDesc", "fLink"];
+      var FIELDS = ["fTitle", "fDate", "fStart", "fEnd", "fPrice", "fAges", "fHost", "fLocation", "fDesc", "fLink"];
 
       var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
       var MONTHS_S = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -426,7 +445,7 @@
         r.dateObj = parseDateVal(r.fDate);
         r.startMin = parseTimeVal(r.fStart);
         r.endMin = parseTimeVal(r.fEnd);
-        r.hasCore = !!(r.fTitle && r.dateObj && r.startMin != null);
+        r.hasAny = FIELDS.some(function (f) { return !!r[f]; });
         return r;
       }
 
@@ -439,6 +458,7 @@
       function detailLines(r) {
         var lines = [];
         if (r.dateObj) lines.push(fmtDateLong(r.dateObj) + (r.startMin != null ? " \u00B7 " + timeRange(r) : ""));
+        if (r.fHost) lines.push("Host: " + r.fHost);
         if (r.fPrice) lines.push("Price: " + r.fPrice);
         if (r.fAges) lines.push("Ages: " + r.fAges);
         if (r.fLocation) lines.push(r.fLocation);
@@ -472,21 +492,25 @@
             return joinParts(head, r.fDesc, detailLines(r).slice(1).join("\n"), r.fLink ? "Link in bio to register" : "", tags);
           } },
         { id: "threads", name: "Threads post", tag: "Social", build: function (r) {
-            var bits = [r.fTitle];
+            var bits = [];
+            if (r.fTitle) bits.push(r.fTitle);
             if (r.dateObj) bits.push(fmtDateShort(r.dateObj) + (r.startMin != null ? ", " + timeRange(r, true) : ""));
             if (r.fPrice) bits.push(r.fPrice);
             if (r.fAges) bits.push("Ages " + r.fAges.replace(/^ages\s*/i, ""));
+            if (r.fHost) bits.push("Host " + r.fHost);
             var s = bits.join(" \u00B7 ");
-            if (r.fLink) s += "\n" + r.fLink;
+            if (r.fLink) s += (s ? "\n" : "") + r.fLink;
             return s;
           } },
         { id: "tiktok", name: "TikTok caption", tag: "Social", build: function (r) {
-            var bits = [r.fTitle];
+            var bits = [];
+            if (r.fTitle) bits.push(r.fTitle);
             if (r.dateObj) bits.push(fmtDateShort(r.dateObj) + (r.startMin != null ? " at " + timeRange(r, true) : ""));
             if (r.fLocation) bits.push("at " + r.fLocation);
+            if (r.fHost) bits.push("Hosted by " + r.fHost);
             var s = bits.join(" ");
-            if (r.fLink) s += "\nRegister: " + r.fLink;
-            s += "\n#FiredArtsStudio #KokomoIN #PYOP";
+            if (r.fLink) s += (s ? "\n" : "") + "Register: " + r.fLink;
+            if (s) s += "\n#FiredArtsStudio #KokomoIN #PYOP";
             return s;
           } },
         { id: "pinterest", name: "Pinterest description", tag: "Social", build: function (r) {
@@ -499,6 +523,7 @@
             if (r.startMin != null) lines.push(timeRange(r));
             if (r.fPrice) lines.push(r.fPrice);
             if (r.fAges) lines.push("Ages " + r.fAges.replace(/^ages\s*/i, ""));
+            if (r.fHost) lines.push("Host: " + r.fHost);
             if (r.fLocation) lines.push(r.fLocation);
             if (r.fLink) lines.push(r.fLink);
             return lines.join("\n");
@@ -564,8 +589,8 @@
         if (!r.hasCore) return;
         var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
         var desc = (preById.gcal.textContent || "").replace(/\n/g, "\\n");
-        var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Main Event//EN", "BEGIN:VEVENT",
-          "UID:" + Date.now() + "@main-event",
+        var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Main Eventer//EN", "BEGIN:VEVENT",
+          "UID:" + Date.now() + "@main-eventer",
           "DTSTART;TZID=America/Indiana/Indianapolis:" + icsStamp(r.dateObj, r.startMin),
           "DTEND;TZID=America/Indiana/Indianapolis:" + icsStamp(r.dateObj, endMin),
           "SUMMARY:" + r.fTitle,
@@ -583,13 +608,13 @@
       function csvCell(s) { return '"' + String(s || "").replace(/"/g, '""') + '"'; }
       $("csvBtn").addEventListener("click", function () {
         var r = getRecord();
-        var head = ["title","date","weekday","start_time","end_time","price","ages","location","description","link"];
+        var head = ["title","date","weekday","start_time","end_time","price","ages","host","location","description","link"];
         var row = [r.fTitle,
           r.dateObj ? MONTHS[r.dateObj.getMonth()] + " " + r.dateObj.getDate() + ", " + r.dateObj.getFullYear() : "",
           r.dateObj ? DAYS[r.dateObj.getDay()] : "",
           r.startMin != null ? fmtTime(r.startMin) : "",
           r.endMin != null ? fmtTime(r.endMin) : "",
-          r.fPrice, r.fAges, r.fLocation, r.fDesc, r.fLink];
+          r.fPrice, r.fAges, r.fHost, r.fLocation, r.fDesc, r.fLink];
         var csv = head.join(",") + "\n" + row.map(csvCell).join(",");
         var blob = new Blob([csv], { type: "text/csv" });
         var a = document.createElement("a");
@@ -601,24 +626,27 @@
       function render() {
         var r = getRecord();
         var canon = $("canonLine");
-        if (r.hasCore) {
-          canon.textContent = [r.fTitle, fmtDateLong(r.dateObj), timeRange(r), r.fPrice, r.fAges ? "Ages " + r.fAges.replace(/^ages\s*/i, "") : "", r.fLocation].filter(Boolean).join(" \u00B7 ");
+        if (r.hasAny) {
+          var cparts = [];
+          if (r.fTitle) cparts.push(r.fTitle);
+          if (r.dateObj) cparts.push(fmtDateLong(r.dateObj));
+          if (r.startMin != null) cparts.push(timeRange(r));
+          if (r.fHost) cparts.push("Host: " + r.fHost);
+          if (r.fPrice) cparts.push(r.fPrice);
+          if (r.fAges) cparts.push("Ages " + r.fAges.replace(/^ages\s*/i, ""));
+          if (r.fLocation) cparts.push(r.fLocation);
+          canon.textContent = cparts.join(" \u00B7 ");
         } else {
-          canon.innerHTML = '<span class="empty">Fill in the name, date, and start time, and the canonical line appears here.</span>';
+          canon.textContent = "";
         }
         CHANNELS.forEach(function (ch) {
           var pre = preById[ch.id];
-          if (!r.hasCore) {
-            pre.textContent = "Waiting on the record \u2014 name, date, and start time.";
-            pre.classList.add("is-empty");
-          } else {
-            pre.textContent = ch.build(r);
-            pre.classList.remove("is-empty");
-          }
+          pre.textContent = r.hasAny ? ch.build(r) : "";
+          pre.classList.toggle("is-empty", !r.hasAny);
         });
         var link = $("gcalLink");
         if (link) {
-          if (r.hasCore) {
+          if (r.fTitle && r.dateObj && r.startMin != null) {
             var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
             var dates = icsStamp(r.dateObj, r.startMin) + "/" + icsStamp(r.dateObj, endMin);
             var url = "https://calendar.google.com/calendar/render?action=TEMPLATE" +
@@ -632,6 +660,13 @@
             link.removeAttribute("href");
           }
         }
+        ["fTitle", "fDate", "fStart", "fEnd", "fPrice", "fAges"].forEach(function (id) {
+          var el = $(id);
+          if (el) {
+            var w = el.closest(".field");
+            if (w) w.classList.toggle("flag", !el.value.trim());
+          }
+        });
       }
       FIELDS.forEach(function (f) {
         $(f).addEventListener("input", render);
@@ -692,6 +727,12 @@
         while ((m = re.exec(text)) !== null) found.push({ raw: m[0], nums: [m[1], m[2]].filter(Boolean) });
         return found;
       }
+      function extractHosts(text) {
+        var found = [], m;
+        var re = /\b[Hh]ost(?:ed by)?\s*:?\s+([A-Z][\w.'-]*(?:\s+[A-Z][\w.'-]+)?)/g;
+        while ((m = re.exec(text)) !== null) found.push(m[1].replace(/[.,;:]$/, "").trim());
+        return found;
+      }
       function uniqNums(arr) {
         var seen = {}, out = [];
         arr.forEach(function (n) { if (!seen[n]) { seen[n] = 1; out.push(n); } });
@@ -712,14 +753,9 @@
         var channel = $("channelSel").value;
         var text = $("pasteText").value;
         results.classList.remove("show");
-        if (!r.hasCore) {
-          verdict.className = "verdict show mid";
-          verdict.textContent = "Fill in the event record first \u2014 name, date, and start time \u2014 then run the check.";
-          return;
-        }
         if (!text.trim()) {
           verdict.className = "verdict show mid";
-          verdict.textContent = "Paste the " + channel.toLowerCase() + " text first, then run the check.";
+          verdict.textContent = "Paste text first, then check.";
           return;
         }
         var rows = [], conflicts = 0, matches = 0, missing = 0;
@@ -728,7 +764,10 @@
         // Date
         var dates = extractDates(text);
         var dateSt, dateDet;
-        if (!dates.length) {
+        if (!r.dateObj) {
+          dateSt = "missing";
+          dateDet = "The record leaves the date blank.";
+        } else if (!dates.length) {
           dateSt = "missing";
           dateDet = "The record says <b>" + esc(fmtDateLong(r.dateObj)) + "</b>. The pasted text states no date.";
         } else {
@@ -742,7 +781,10 @@
         // Weekday
         var wds = uniqNums(extractWeekdays(text));
         var wdSt, wdDet;
-        if (!wds.length) {
+        if (!r.dateObj) {
+          wdSt = "missing";
+          wdDet = "The record leaves the date blank.";
+        } else if (!wds.length) {
           wdSt = "missing";
           wdDet = "The record falls on a <b>" + esc(DAYS[r.dateObj.getDay()]) + "</b>. The pasted text names no day of the week.";
         } else {
@@ -756,7 +798,10 @@
         var times = uniqNums(extractTimes(text));
         var rangeTxt = timeRange(r);
         var tSt, tDet;
-        if (!times.length) {
+        if (r.startMin == null) {
+          tSt = "missing";
+          tDet = "The record leaves the time blank.";
+        } else if (!times.length) {
           tSt = "missing";
           tDet = "The record runs <b>" + esc(rangeTxt) + "</b>. The pasted text states no time.";
         } else {
@@ -809,17 +854,37 @@
           rows.push(row("Ages", aSt, aDet)); tally(aSt);
         }
 
+        // Host
+        if (r.fHost) {
+          var foundHosts = extractHosts(text);
+          var hSt, hDet;
+          if (!foundHosts.length) {
+            hSt = "missing";
+            hDet = "The record lists host <b>" + esc(r.fHost) + "</b>. The pasted text names no host.";
+          } else {
+            var hLower = r.fHost.toLowerCase();
+            var hOk = foundHosts.some(function (h) {
+              var a = h.toLowerCase();
+              return a === hLower || a.indexOf(hLower) === 0 || hLower.indexOf(a) === 0;
+            });
+            var shownH = foundHosts.join(", ");
+            if (hOk) { hSt = "match"; hDet = "Record: <b>" + esc(r.fHost) + "</b>. Text names: <b>" + esc(shownH) + "</b>."; }
+            else { hSt = "conflict"; hDet = "Record: <b>" + esc(r.fHost) + "</b>. Text names: <b>" + esc(shownH) + "</b>."; }
+          }
+          rows.push(row("Host", hSt, hDet)); tally(hSt);
+        }
+
         results.innerHTML = rows.join("");
         results.classList.add("show");
         if (conflicts > 0) {
           verdict.className = "verdict show no";
-          verdict.textContent = conflicts + (conflicts === 1 ? " conflict" : " conflicts") + " with the record in the " + channel.toLowerCase() + " text. Fix the text \u2014 or, if the text is right, fix the record and regenerate everything from it.";
+          verdict.textContent = conflicts + (conflicts === 1 ? " conflict" : " conflicts") + " with the record.";
         } else if (missing > 0) {
           verdict.className = "verdict show mid";
-          verdict.textContent = "No conflicts in the " + channel.toLowerCase() + " text \u2014 " + matches + (matches === 1 ? " field matches" : " fields match") + ", " + missing + (missing === 1 ? " field is" : " fields are") + " not stated and can't be confirmed.";
+          verdict.textContent = "No conflicts \u2014 " + matches + (matches === 1 ? " field matches" : " fields match") + ", " + missing + " not stated.";
         } else {
           verdict.className = "verdict show ok";
-          verdict.textContent = "Uniform. Every stated field in the " + channel.toLowerCase() + " text matches the record.";
+          verdict.textContent = "Uniform.";
         }
       });
     </script>
@@ -829,7 +894,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
-/* ---------- Main Event: Firebase save/load + Google push ---------- */
+/* ---------- Main Eventer: Firebase save/load + Google push ---------- */
 (function () {
   "use strict";
 
@@ -879,7 +944,7 @@
       label.textContent = "Signed in as " + currentUser.email;
       btn.textContent = "Sign out";
     } else {
-      label.textContent = "Sign in to save events";
+      label.textContent = "";
       btn.textContent = "Sign in with Google";
     }
   }
@@ -903,7 +968,7 @@
     var r = getRecord();
     return {
       title: r.fTitle, date: r.fDate, startTime: r.fStart, endTime: r.fEnd,
-      price: r.fPrice, ages: r.fAges, location: r.fLocation,
+      price: r.fPrice, ages: r.fAges, host: r.fHost, location: r.fLocation,
       description: r.fDesc, link: r.fLink
     };
   }
@@ -915,6 +980,7 @@
     $("fEnd").value = d.endTime || "";
     $("fPrice").value = d.price || "";
     $("fAges").value = d.ages || "";
+    $("fHost").value = d.host || "";
     $("fLocation").value = d.location || "";
     $("fDesc").value = d.description || "";
     $("fLink").value = d.link || "";
@@ -930,7 +996,7 @@
   function saveEvent() {
     if (!currentUser) { status("Sign in first to save."); return; }
     var r = getRecord();
-    if (!r.hasCore) { status("Fill in the name, date, and start time first."); return; }
+    if (!r.hasAny) { status("Nothing to save."); return; }
     var data = recordFromForm();
     data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
     data.createdBy = currentUser.email;
@@ -994,7 +1060,7 @@
 
   function pushToCalendar() {
     var r = getRecord();
-    if (!r.hasCore) { status("Fill in the name, date, and start time first."); return; }
+    if (!(r.fTitle && r.dateObj && r.startMin != null)) { status("Add a name, date, and start time to add to Google Calendar."); return; }
     requestGoogleToken("https://www.googleapis.com/auth/calendar.events", function () {
       var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
       var gcalPre = $("pre-gcal");
@@ -1017,7 +1083,7 @@
 
   function pushToSheet() {
     var r = getRecord();
-    if (!r.hasCore) { status("Fill in the name, date, and start time first."); return; }
+    if (!r.hasAny) { status("Nothing to add."); return; }
     if (!GOOGLE_SHEET_ID) { status("Google Sheets needs a target sheet. See README."); return; }
     requestGoogleToken("https://www.googleapis.com/auth/spreadsheets", function () {
       var row = [r.fTitle,
@@ -1025,7 +1091,7 @@
         r.dateObj ? DAYS[r.dateObj.getDay()] : "",
         r.startMin != null ? fmtTime(r.startMin) : "",
         r.endMin != null ? fmtTime(r.endMin) : "",
-        r.fPrice, r.fAges, r.fLocation, r.fDesc, r.fLink];
+        r.fPrice, r.fAges, r.fHost, r.fLocation, r.fDesc, r.fLink];
       fetch("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(GOOGLE_SHEET_ID) + "/values/A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", {
         method: "POST",
         headers: { "Authorization": "Bearer " + gisToken, "Content-Type": "application/json" },
@@ -1047,6 +1113,19 @@
     if (calBtn) calBtn.addEventListener("click", pushToCalendar);
     var sheetBtn = $("meSheetBtn");
     if (sheetBtn) sheetBtn.addEventListener("click", pushToSheet);
+    var tut = $("tutBackdrop");
+    if (tut) {
+      var seenTut = false;
+      try { seenTut = !!localStorage.getItem("me_tutorial_seen"); } catch (e) {}
+      if (!seenTut) tut.classList.add("show");
+      var hideTut = function () {
+        tut.classList.remove("show");
+        try { localStorage.setItem("me_tutorial_seen", "1"); } catch (e) {}
+      };
+      var tutClose = $("tutClose");
+      if (tutClose) tutClose.addEventListener("click", hideTut);
+      tut.addEventListener("click", function (e) { if (e.target === tut) hideTut(); });
+    }
     initFirebase();
   });
 })();
