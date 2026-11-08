@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Main Event</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #faf6f1;
+        --surface: #ffffff;
+        --surface-2: #f3ece3;
+        --ink: #2b2118;
+        --ink-soft: #5d4f42;
+        --line: #ddd0c0;
+        --accent: #a44a24;
+        --accent-ink: #ffffff;
+        --good: #2e6b34;
+        --good-bg: #e2efe1;
+        --bad: #a12622;
+        --bad-bg: #f9e3e1;
+        --warn: #8a6414;
+        --warn-bg: #f7ecd2;
+        --chip: #efe7db;
+        --shadow: 0 1px 2px rgba(60, 38, 20, .06), 0 8px 24px rgba(60, 38, 20, .06);
+        --radius: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1d1712;
+          --surface: #2a211a;
+          --surface-2: #332820;
+          --ink: #f2e9df;
+          --ink-soft: #c4b3a1;
+          --line: #4a3a2d;
+          --accent: #e07a45;
+          --accent-ink: #241407;
+          --good: #9ed3a2;
+          --good-bg: #243d27;
+          --bad: #f2a49f;
+          --bad-bg: #472320;
+          --warn: #eacd8a;
+          --warn-bg: #453a1c;
+          --chip: #3a2d21;
+          --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+        }
+      }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Public Sans", system-ui, -apple-system, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        -webkit-touch-callout: none;
+      }
+      h1, h2, h3, p { margin: 0; }
+      button, input, select, textarea { font: inherit; color: inherit; }
+      input, textarea, select { user-select: text; -webkit-user-select: text; }
+      .nonsel { user-select: none; -webkit-user-select: none; }
+
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 18px 64px; }
+
+      header.page { margin-bottom: 26px; }
+      header.page h1 {
+        font-family: "Lora", Georgia, serif;
+        font-size: clamp(30px, 5vw, 42px);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.12;
+      }
+      header.page p {
+        margin-top: 8px;
+        color: var(--ink-soft);
+        max-width: 62ch;
+        font-size: 17px;
+      }
+
+      .cols {
+        display: grid;
+        grid-template-columns: minmax(320px, 400px) 1fr;
+        gap: 22px;
+        align-items: start;
+      }
+      @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+      .card + .card { margin-top: 22px; }
+      .card h2 {
+        font-family: "Lora", Georgia, serif;
+        font-size: 21px;
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      .card .sub { color: var(--ink-soft); font-size: 14.5px; margin-top: 4px; }
+
+      form.record { position: sticky; top: 18px; }
+      @media (max-width: 860px) { form.record { position: static; } }
+      .field { margin-top: 14px; }
+      .field label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        margin-bottom: 5px;
+      }
+      .field input, .field textarea, .field select {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 10px 12px;
+        font-size: 16px;
+      }
+      .field textarea { min-height: 84px; resize: vertical; }
+      .field input:focus, .field textarea:focus, .field select:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+        border-color: var(--accent);
+      }
+      .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+      .canon {
+        margin-top: 18px;
+        background: var(--surface-2);
+        border-radius: 10px;
+        padding: 13px 15px;
+        font-size: 15px;
+      }
+      .canon .k {
+        font-size: 12px; font-weight: 700; letter-spacing: .06em;
+        text-transform: uppercase; color: var(--accent); margin-bottom: 3px;
+      }
+      .canon .v { font-weight: 600; }
+      .canon .empty { color: var(--ink-soft); font-weight: 400; font-style: italic; }
+
+      .out-head {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap;
+      }
+      .out-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+      @media (max-width: 640px) { .out-grid { grid-template-columns: 1fr; } }
+      .out {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 14px 15px;
+        background: var(--bg);
+        display: flex; flex-direction: column;
+      }
+      .out h3 { font-size: 15.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+      .out h3 .tag {
+        font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+        background: var(--chip); color: var(--ink-soft);
+        padding: 2px 8px; border-radius: 999px;
+      }
+      .out pre {
+        margin: 10px 0 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: inherit;
+        font-size: 14.5px;
+        line-height: 1.55;
+        flex: 1;
+      }
+      .out pre.is-empty { color: var(--ink-soft); font-style: italic; }
+      .out .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+      .btn {
+        appearance: none;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-radius: 9px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn.ghost { background: transparent; color: var(--accent); }
+      .btn.plain { background: var(--surface); border-color: var(--line); color: var(--ink); }
+      .btn:active { transform: translateY(1px); }
+      .btn[disabled] { opacity: .45; cursor: default; transform: none; }
+      .btn.copied { background: var(--good); border-color: var(--good); color: #fff; }
+
+      .check-controls { display: grid; grid-template-columns: 220px 1fr; gap: 12px; margin-top: 14px; }
+      @media (max-width: 640px) { .check-controls { grid-template-columns: 1fr; } }
+      #pasteText { width: 100%; box-sizing: border-box; min-height: 130px; resize: vertical;
+        background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: 15px; }
+      #pasteText:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+      .verdict { margin-top: 16px; border-radius: 10px; padding: 13px 15px; font-weight: 600; display: none; }
+      .verdict.show { display: block; }
+      .verdict.ok { background: var(--good-bg); color: var(--good); }
+      .verdict.no { background: var(--bad-bg); color: var(--bad); }
+      .verdict.mid { background: var(--warn-bg); color: var(--warn); }
+
+      .results { margin-top: 14px; display: none; }
+      .results.show { display: block; }
+      .rrow {
+        display: grid; grid-template-columns: 110px 1fr auto; gap: 12px;
+        padding: 11px 0; border-top: 1px solid var(--line); align-items: start;
+      }
+      .rrow .fname { font-weight: 700; font-size: 14.5px; padding-top: 2px; }
+      .rrow .fdetail { font-size: 14.5px; color: var(--ink-soft); }
+      .rrow .fdetail b { color: var(--ink); }
+      .pill {
+        font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+        padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+      }
+      .pill.match { background: var(--good-bg); color: var(--good); }
+      .pill.conflict { background: var(--bad-bg); color: var(--bad); }
+      .pill.missing { background: var(--warn-bg); color: var(--warn); }
+      @media (max-width: 520px) {
+        .rrow { grid-template-columns: 1fr auto; }
+        .rrow .fdetail { grid-column: 1 / -1; order: 3; }
+      }
+      .note { margin-top: 14px; font-size: 13.5px; color: var(--ink-soft); }
+
+      .me-auth { margin-bottom: 22px; }
+      .me-auth-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+      .me-list { list-style: none; margin: 14px 0 0; padding: 0; }
+      .me-list li { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+      .me-saved { flex: 1; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--ink); }
+      .me-saved:hover { text-decoration: underline; }
+      .me-empty { color: var(--ink-soft); font-size: 14.5px; }
+      .me-del { padding: 6px 10px; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page nonsel">
+        <h1>Main Event</h1>
+        <p>Enter an event once. Every channel&rsquo;s copy is generated from that single record &mdash; and any post already written can be checked against it, field by field, before it goes out.</p>
+      </header>
+
+      <section class="card me-auth">
+        <div class="me-auth-row">
+          <p id="meAuthLabel" style="font-weight:600;">Sign in to save events</p>
+          <button class="btn" id="meAuthBtn" type="button">Sign in with Google</button>
+        </div>
+        <p class="note" id="meStatus"></p>
+      </section>
+
+      <div class="cols">
+        <div>
+        <form class="card record" id="recordForm" autocomplete="off">
+          <h2>The event record</h2>
+          <p class="sub">This is the source of truth. Everything on this page reads from it.</p>
+
+          <div class="field">
+            <label for="fTitle">Event name</label>
+            <input id="fTitle" type="text" />
+          </div>
+          <div class="field">
+            <label for="fDate">Date</label>
+            <input id="fDate" type="date" />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="fStart">Start time</label>
+              <input id="fStart" type="time" />
+            </div>
+            <div class="field">
+              <label for="fEnd">End time</label>
+              <input id="fEnd" type="time" />
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="fPrice">Price</label>
+              <input id="fPrice" type="text" />
+            </div>
+            <div class="field">
+              <label for="fAges">Ages</label>
+              <input id="fAges" type="text" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="fLocation">Location</label>
+            <input id="fLocation" type="text" />
+          </div>
+          <div class="field">
+            <label for="fDesc">Description</label>
+            <textarea id="fDesc"></textarea>
+          </div>
+          <div class="field">
+            <label for="fLink">Registration / event page link</label>
+            <input id="fLink" type="url" inputmode="url" />
+          </div>
+
+          <div class="canon nonsel">
+            <div class="k">Canonical line</div>
+            <div class="v" id="canonLine"><span class="empty">Fill in the record and the canonical line appears here.</span></div>
+          </div>
+        </form>
+        <section class="card" id="savedCard">
+          <h2>Saved events</h2>
+          <p class="sub">Tap one to load it. Saving needs sign-in.</p>
+          <ul class="me-list" id="meSavedList"><li class="me-empty">Sign in to see saved events.</li></ul>
+          <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn" id="meSaveBtn" type="button">Save event</button>
+            <button class="btn plain" id="meNewBtn" type="button">New event</button>
+          </div>
+        </section>
+        </div>
+
+        <div>
+          <section class="card">
+            <div class="out-head">
+              <div>
+                <h2>Generated from the record</h2>
+                <p class="sub">Copy a channel&rsquo;s text and paste it into that channel. Nothing is typed twice, so nothing can disagree.</p>
+              </div>
+              <button class="btn ghost" id="csvBtn" type="button">Download CSV row (Canva bulk create)</button>
+            </div>
+            <div class="out-grid" id="outGrid"></div>
+          </section>
+
+          <section class="card" id="googleCard">
+            <h2>Google</h2>
+            <p class="sub">Push this record straight to Google Calendar or a Google Sheet.</p>
+            <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" id="meCalBtn" type="button">Add to Google Calendar</button>
+              <button class="btn plain" id="meSheetBtn" type="button">Add row to Google Sheet</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Check a post against the record</h2>
+            <p class="sub">Paste the text of anything already written or already live &mdash; a website listing, a caption, the words on a flyer &mdash; and it gets compared field by field.</p>
+            <div class="check-controls">
+              <div class="field" style="margin-top:0">
+                <label for="channelSel">Where this text lives</label>
+                <select id="channelSel">
+                  <option>Website</option>
+                  <option>Facebook</option>
+                  <option>Instagram</option>
+                  <option>Threads</option>
+                  <option>TikTok</option>
+                  <option>Pinterest</option>
+                  <option>Flyer / graphic</option>
+                  <option>Google Calendar</option>
+                  <option>Other listing</option>
+                </select>
+              </div>
+              <div class="field" style="margin-top:0">
+                <label for="pasteText">Pasted text</label>
+                <textarea id="pasteText"></textarea>
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn" id="checkBtn" type="button">Check it</button>
+            </div>
+            <div class="verdict" id="verdict"></div>
+            <div class="results" id="results"></div>
+            <p class="note">Checks date, day of week, start and end times, price, and ages. A field the pasted text never states is flagged &ldquo;not stated&rdquo; rather than passed &mdash; a post that omits the time can&rsquo;t conflict with it, but it can&rsquo;t confirm it either.</p>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var FIELDS = ["fTitle", "fDate", "fStart", "fEnd", "fPrice", "fAges", "fLocation", "fDesc", "fLink"];
+
+      var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      var MONTHS_S = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      var DAYS_S = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+      function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+      function parseDateVal(v) {
+        if (!v) return null;
+        var p = v.split("-");
+        if (p.length !== 3) return null;
+        var d = new Date(+p[0], +p[1] - 1, +p[2]);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      function parseTimeVal(v) {
+        if (!v) return null;
+        var p = v.split(":");
+        return (+p[0]) * 60 + (+p[1]);
+      }
+      function fmtTime(mins) {
+        if (mins == null) return "";
+        var h = Math.floor(mins / 60), m = mins % 60;
+        var ap = h >= 12 ? "PM" : "AM";
+        var h12 = h % 12; if (h12 === 0) h12 = 12;
+        return h12 + ":" + pad(m) + " " + ap;
+      }
+      function fmtTimeShort(mins) {
+        if (mins == null) return "";
+        var h = Math.floor(mins / 60), m = mins % 60;
+        var ap = h >= 12 ? "PM" : "AM";
+        var h12 = h % 12; if (h12 === 0) h12 = 12;
+        return m === 0 ? h12 + " " + ap : h12 + ":" + pad(m) + " " + ap;
+      }
+      function fmtDateLong(d) {
+        return DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+      }
+      function fmtDateShort(d) {
+        return DAYS_S[d.getDay()] + ", " + MONTHS_S[d.getMonth()] + " " + d.getDate();
+      }
+
+      function getRecord() {
+        var r = {};
+        FIELDS.forEach(function (f) { r[f] = $(f).value.trim(); });
+        r.dateObj = parseDateVal(r.fDate);
+        r.startMin = parseTimeVal(r.fStart);
+        r.endMin = parseTimeVal(r.fEnd);
+        r.hasCore = !!(r.fTitle && r.dateObj && r.startMin != null);
+        return r;
+      }
+
+      function timeRange(r, short) {
+        var f = short ? fmtTimeShort : fmtTime;
+        if (r.startMin == null) return "";
+        var s = f(r.startMin);
+        return r.endMin != null ? s + " \u2013 " + f(r.endMin) : s;
+      }
+      function detailLines(r) {
+        var lines = [];
+        if (r.dateObj) lines.push(fmtDateLong(r.dateObj) + (r.startMin != null ? " \u00B7 " + timeRange(r) : ""));
+        if (r.fPrice) lines.push("Price: " + r.fPrice);
+        if (r.fAges) lines.push("Ages: " + r.fAges);
+        if (r.fLocation) lines.push(r.fLocation);
+        return lines;
+      }
+      function joinParts() {
+        var parts = [];
+        for (var i = 0; i < arguments.length; i++) if (arguments[i]) parts.push(arguments[i]);
+        return parts.join("\n");
+      }
+
+      var CHANNELS = [
+        { id: "gcal", name: "Google Calendar", tag: "Calendar", build: function (r) {
+            var lines = [];
+            if (r.fDesc) lines.push(r.fDesc);
+            var d = detailLines(r); d.shift();
+            lines = lines.concat(d);
+            if (r.fLink) lines.push("Details & registration: " + r.fLink);
+            return lines.join("\n");
+          }, extra: "gcal" },
+        { id: "website", name: "Website listing", tag: "Website", build: function (r) {
+            return joinParts(r.fTitle, detailLines(r).join("\n"), r.fDesc, r.fLink ? "Reserve your spot: " + r.fLink : "");
+          } },
+        { id: "facebook", name: "Facebook post", tag: "Social", build: function (r) {
+            var head = r.fTitle + (r.dateObj ? " \u2014 " + fmtDateShort(r.dateObj) + (r.startMin != null ? ", " + timeRange(r, true) : "") : "");
+            return joinParts(head, r.fDesc, detailLines(r).slice(1).join("\n"), r.fLink ? "Save your seat: " + r.fLink : "");
+          } },
+        { id: "instagram", name: "Instagram caption", tag: "Social", build: function (r) {
+            var head = r.fTitle + (r.dateObj ? " \u2022 " + fmtDateShort(r.dateObj) + (r.startMin != null ? " \u2022 " + timeRange(r, true) : "") : "");
+            var tags = "#FiredArtsStudio #KokomoIN #PaintYourOwnPottery";
+            return joinParts(head, r.fDesc, detailLines(r).slice(1).join("\n"), r.fLink ? "Link in bio to register" : "", tags);
+          } },
+        { id: "threads", name: "Threads post", tag: "Social", build: function (r) {
+            var bits = [r.fTitle];
+            if (r.dateObj) bits.push(fmtDateShort(r.dateObj) + (r.startMin != null ? ", " + timeRange(r, true) : ""));
+            if (r.fPrice) bits.push(r.fPrice);
+            if (r.fAges) bits.push("Ages " + r.fAges.replace(/^ages\s*/i, ""));
+            var s = bits.join(" \u00B7 ");
+            if (r.fLink) s += "\n" + r.fLink;
+            return s;
+          } },
+        { id: "tiktok", name: "TikTok caption", tag: "Social", build: function (r) {
+            var bits = [r.fTitle];
+            if (r.dateObj) bits.push(fmtDateShort(r.dateObj) + (r.startMin != null ? " at " + timeRange(r, true) : ""));
+            if (r.fLocation) bits.push("at " + r.fLocation);
+            var s = bits.join(" ");
+            if (r.fLink) s += "\nRegister: " + r.fLink;
+            s += "\n#FiredArtsStudio #KokomoIN #PYOP";
+            return s;
+          } },
+        { id: "pinterest", name: "Pinterest description", tag: "Social", build: function (r) {
+            return joinParts(r.fTitle + (r.dateObj ? " | " + fmtDateLong(r.dateObj) : ""), r.fDesc, detailLines(r).slice(1).join("\n"), r.fLink);
+          } },
+        { id: "flyer", name: "Flyer text", tag: "Graphic", build: function (r) {
+            var lines = [];
+            if (r.fTitle) lines.push(r.fTitle.toUpperCase());
+            if (r.dateObj) lines.push(fmtDateLong(r.dateObj));
+            if (r.startMin != null) lines.push(timeRange(r));
+            if (r.fPrice) lines.push(r.fPrice);
+            if (r.fAges) lines.push("Ages " + r.fAges.replace(/^ages\s*/i, ""));
+            if (r.fLocation) lines.push(r.fLocation);
+            if (r.fLink) lines.push(r.fLink);
+            return lines.join("\n");
+          } }
+      ];
+
+      var outGrid = $("outGrid");
+      var preById = {};
+      CHANNELS.forEach(function (ch) {
+        var div = document.createElement("div");
+        div.className = "out nonsel";
+        var h = document.createElement("h3");
+        h.textContent = ch.name;
+        var tag = document.createElement("span");
+        tag.className = "tag"; tag.textContent = ch.tag;
+        h.appendChild(tag);
+        var pre = document.createElement("pre");
+        pre.id = "pre-" + ch.id;
+        var actions = document.createElement("div");
+        actions.className = "actions";
+        var copyBtn = document.createElement("button");
+        copyBtn.className = "btn"; copyBtn.type = "button"; copyBtn.textContent = "Copy";
+        copyBtn.addEventListener("click", function () { copyText(pre.textContent, copyBtn); });
+        actions.appendChild(copyBtn);
+        if (ch.extra === "gcal") {
+          var link = document.createElement("a");
+          link.className = "btn ghost"; link.id = "gcalLink"; link.target = "_blank"; link.rel = "noopener";
+          link.textContent = "Open in Google Calendar";
+          actions.appendChild(link);
+          var ics = document.createElement("button");
+          ics.className = "btn plain"; ics.type = "button"; ics.textContent = "Download .ics";
+          ics.addEventListener("click", downloadIcs);
+          actions.appendChild(ics);
+        }
+        div.appendChild(h); div.appendChild(pre); div.appendChild(actions);
+        outGrid.appendChild(div);
+        preById[ch.id] = pre;
+      });
+
+      function copyText(text, btn) {
+        function done() {
+          var old = btn.textContent;
+          btn.textContent = "Copied"; btn.classList.add("copied");
+          setTimeout(function () { btn.textContent = old; btn.classList.remove("copied"); }, 1600);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+        } else { fallback(); }
+        function fallback() {
+          var ta = document.createElement("textarea");
+          ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(ta); done();
+        }
+      }
+
+      function icsStamp(d, mins) {
+        return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "T" + pad(Math.floor(mins / 60)) + pad(mins % 60) + "00";
+      }
+      function downloadIcs() {
+        var r = getRecord();
+        if (!r.hasCore) return;
+        var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
+        var desc = (preById.gcal.textContent || "").replace(/\n/g, "\\n");
+        var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Main Event//EN", "BEGIN:VEVENT",
+          "UID:" + Date.now() + "@main-event",
+          "DTSTART;TZID=America/Indiana/Indianapolis:" + icsStamp(r.dateObj, r.startMin),
+          "DTEND;TZID=America/Indiana/Indianapolis:" + icsStamp(r.dateObj, endMin),
+          "SUMMARY:" + r.fTitle,
+          r.fLocation ? "LOCATION:" + r.fLocation : "",
+          "DESCRIPTION:" + desc,
+          "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+        var blob = new Blob([ics], { type: "text/calendar" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = r.fTitle.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() + ".ics";
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+      }
+
+      function csvCell(s) { return '"' + String(s || "").replace(/"/g, '""') + '"'; }
+      $("csvBtn").addEventListener("click", function () {
+        var r = getRecord();
+        var head = ["title","date","weekday","start_time","end_time","price","ages","location","description","link"];
+        var row = [r.fTitle,
+          r.dateObj ? MONTHS[r.dateObj.getMonth()] + " " + r.dateObj.getDate() + ", " + r.dateObj.getFullYear() : "",
+          r.dateObj ? DAYS[r.dateObj.getDay()] : "",
+          r.startMin != null ? fmtTime(r.startMin) : "",
+          r.endMin != null ? fmtTime(r.endMin) : "",
+          r.fPrice, r.fAges, r.fLocation, r.fDesc, r.fLink];
+        var csv = head.join(",") + "\n" + row.map(csvCell).join(",");
+        var blob = new Blob([csv], { type: "text/csv" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = "event-record.csv";
+        document.body.appendChild(a); a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+      });
+
+      function render() {
+        var r = getRecord();
+        var canon = $("canonLine");
+        if (r.hasCore) {
+          canon.textContent = [r.fTitle, fmtDateLong(r.dateObj), timeRange(r), r.fPrice, r.fAges ? "Ages " + r.fAges.replace(/^ages\s*/i, "") : "", r.fLocation].filter(Boolean).join(" \u00B7 ");
+        } else {
+          canon.innerHTML = '<span class="empty">Fill in the name, date, and start time, and the canonical line appears here.</span>';
+        }
+        CHANNELS.forEach(function (ch) {
+          var pre = preById[ch.id];
+          if (!r.hasCore) {
+            pre.textContent = "Waiting on the record \u2014 name, date, and start time.";
+            pre.classList.add("is-empty");
+          } else {
+            pre.textContent = ch.build(r);
+            pre.classList.remove("is-empty");
+          }
+        });
+        var link = $("gcalLink");
+        if (link) {
+          if (r.hasCore) {
+            var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
+            var dates = icsStamp(r.dateObj, r.startMin) + "/" + icsStamp(r.dateObj, endMin);
+            var url = "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+              "&text=" + encodeURIComponent(r.fTitle) +
+              "&dates=" + dates +
+              "&ctz=America/Indiana/Indianapolis" +
+              "&details=" + encodeURIComponent(preById.gcal.textContent || "") +
+              (r.fLocation ? "&location=" + encodeURIComponent(r.fLocation) : "");
+            link.href = url; link.removeAttribute("disabled");
+          } else {
+            link.removeAttribute("href");
+          }
+        }
+      }
+      FIELDS.forEach(function (f) {
+        $(f).addEventListener("input", render);
+        $(f).addEventListener("change", render);
+      });
+      $("recordForm").addEventListener("submit", function (e) { e.preventDefault(); });
+      render();
+
+      /* ---------- checker ---------- */
+      var MONTH_LOOKUP = {};
+      MONTHS.forEach(function (m, i) { MONTH_LOOKUP[m.toLowerCase()] = i; MONTH_LOOKUP[MONTHS_S[i].toLowerCase()] = i; });
+      MONTH_LOOKUP["sept"] = 8;
+      var DAY_LOOKUP = {};
+      DAYS.forEach(function (d, i) { DAY_LOOKUP[d.toLowerCase()] = i; DAY_LOOKUP[DAYS_S[i].toLowerCase()] = i; });
+
+      function extractTimes(text) {
+        var found = [], m;
+        var re = /(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)/gi;
+        while ((m = re.exec(text)) !== null) {
+          var h = +m[1] % 12;
+          if (/p/i.test(m[3])) h += 12;
+          found.push(h * 60 + (m[2] ? +m[2] : 0));
+        }
+        if (/\bnoon\b/i.test(text)) found.push(720);
+        if (/\bmidnight\b/i.test(text)) found.push(0);
+        return found;
+      }
+      function extractDates(text) {
+        var found = [], m;
+        var re1 = /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/gi;
+        while ((m = re1.exec(text)) !== null) found.push({ month: MONTH_LOOKUP[m[1].toLowerCase()], day: +m[2] });
+        var re2 = /\b(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?\b/g;
+        while ((m = re2.exec(text)) !== null) {
+          var mo = +m[1], da = +m[2];
+          if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) found.push({ month: mo - 1, day: da });
+        }
+        return found;
+      }
+      function extractWeekdays(text) {
+        var found = [], m;
+        var re = /\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tue|tues|wed|thu|thur|thurs|fri|sat)\b/gi;
+        var extra = { tues: 2, thur: 4, thurs: 4 };
+        while ((m = re.exec(text)) !== null) {
+          var k = m[1].toLowerCase();
+          found.push(DAY_LOOKUP[k] != null ? DAY_LOOKUP[k] : extra[k]);
+        }
+        return found;
+      }
+      function extractPrices(text) {
+        var found = [], m;
+        var re = /\$\s?(\d+(?:\.\d{1,2})?)/g;
+        while ((m = re.exec(text)) !== null) found.push(parseFloat(m[1]));
+        return found;
+      }
+      function extractAges(text) {
+        var found = [], m;
+        var re = /ages?\s*(?:of\s*)?(\d{1,2})\s*(?:\u2013|\u2014|-|to|\+|and up|& up)?\s*(\d{1,2})?/gi;
+        while ((m = re.exec(text)) !== null) found.push({ raw: m[0], nums: [m[1], m[2]].filter(Boolean) });
+        return found;
+      }
+      function uniqNums(arr) {
+        var seen = {}, out = [];
+        arr.forEach(function (n) { if (!seen[n]) { seen[n] = 1; out.push(n); } });
+        return out;
+      }
+      function esc(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function row(name, status, detailHtml) {
+        var label = status === "match" ? "Match" : status === "conflict" ? "Conflict" : "Not stated";
+        return '<div class="rrow"><div class="fname">' + esc(name) + '</div><div class="fdetail">' + detailHtml + '</div><span class="pill ' + status + '">' + label + "</span></div>";
+      }
+
+      $("checkBtn").addEventListener("click", function () {
+        var r = getRecord();
+        var verdict = $("verdict"), results = $("results");
+        var channel = $("channelSel").value;
+        var text = $("pasteText").value;
+        results.classList.remove("show");
+        if (!r.hasCore) {
+          verdict.className = "verdict show mid";
+          verdict.textContent = "Fill in the event record first \u2014 name, date, and start time \u2014 then run the check.";
+          return;
+        }
+        if (!text.trim()) {
+          verdict.className = "verdict show mid";
+          verdict.textContent = "Paste the " + channel.toLowerCase() + " text first, then run the check.";
+          return;
+        }
+        var rows = [], conflicts = 0, matches = 0, missing = 0;
+        function tally(st) { if (st === "conflict") conflicts++; else if (st === "match") matches++; else missing++; }
+
+        // Date
+        var dates = extractDates(text);
+        var dateSt, dateDet;
+        if (!dates.length) {
+          dateSt = "missing";
+          dateDet = "The record says <b>" + esc(fmtDateLong(r.dateObj)) + "</b>. The pasted text states no date.";
+        } else {
+          var okD = dates.some(function (d) { return d.month === r.dateObj.getMonth() && d.day === r.dateObj.getDate(); });
+          var shown = dates.map(function (d) { return MONTHS_S[d.month] + " " + d.day; }).join(", ");
+          if (okD) { dateSt = "match"; dateDet = "Record: <b>" + esc(fmtDateLong(r.dateObj)) + "</b>. Text states: <b>" + esc(shown) + "</b>."; }
+          else { dateSt = "conflict"; dateDet = "Record: <b>" + esc(fmtDateLong(r.dateObj)) + "</b>. Text states: <b>" + esc(shown) + "</b>."; }
+        }
+        rows.push(row("Date", dateSt, dateDet)); tally(dateSt);
+
+        // Weekday
+        var wds = uniqNums(extractWeekdays(text));
+        var wdSt, wdDet;
+        if (!wds.length) {
+          wdSt = "missing";
+          wdDet = "The record falls on a <b>" + esc(DAYS[r.dateObj.getDay()]) + "</b>. The pasted text names no day of the week.";
+        } else {
+          var names = wds.map(function (i) { return DAYS[i]; }).join(", ");
+          if (wds.indexOf(r.dateObj.getDay()) >= 0) { wdSt = "match"; wdDet = "Record: <b>" + esc(DAYS[r.dateObj.getDay()]) + "</b>. Text says: <b>" + esc(names) + "</b>."; }
+          else { wdSt = "conflict"; wdDet = "Record: <b>" + esc(DAYS[r.dateObj.getDay()]) + "</b>. Text says: <b>" + esc(names) + "</b>."; }
+        }
+        rows.push(row("Day of week", wdSt, wdDet)); tally(wdSt);
+
+        // Times
+        var times = uniqNums(extractTimes(text));
+        var rangeTxt = timeRange(r);
+        var tSt, tDet;
+        if (!times.length) {
+          tSt = "missing";
+          tDet = "The record runs <b>" + esc(rangeTxt) + "</b>. The pasted text states no time.";
+        } else {
+          var canonTimes = [r.startMin]; if (r.endMin != null) canonTimes.push(r.endMin);
+          var bad = times.filter(function (t) { return canonTimes.indexOf(t) < 0; });
+          var shownT = times.map(fmtTime).join(", ");
+          if (!bad.length) { tSt = "match"; tDet = "Record: <b>" + esc(rangeTxt) + "</b>. Text states: <b>" + esc(shownT) + "</b>."; }
+          else { tSt = "conflict"; tDet = "Record: <b>" + esc(rangeTxt) + "</b>. Text states: <b>" + esc(shownT) + "</b> \u2014 " + esc(bad.map(fmtTime).join(", ")) + " does not match the record."; }
+        }
+        rows.push(row("Times", tSt, tDet)); tally(tSt);
+
+        // Price
+        if (r.fPrice) {
+          var canonNums = (r.fPrice.match(/\d+(?:\.\d{1,2})?/g) || []).map(parseFloat);
+          var canonFree = /\bfree\b/i.test(r.fPrice);
+          var foundNums = extractPrices(text);
+          var textFree = /\bfree\b/i.test(text);
+          var pSt, pDet;
+          if (!foundNums.length && !textFree) {
+            pSt = "missing";
+            pDet = "The record lists <b>" + esc(r.fPrice) + "</b>. The pasted text states no price.";
+          } else if (canonFree) {
+            if (textFree) { pSt = "match"; pDet = "Record: <b>" + esc(r.fPrice) + "</b>. Text also says free."; }
+            else { pSt = "conflict"; pDet = "Record: <b>" + esc(r.fPrice) + "</b>. Text states: <b>$" + foundNums.join(", $") + "</b>."; }
+          } else {
+            var badP = foundNums.filter(function (n) { return canonNums.indexOf(n) < 0; });
+            if (foundNums.length && !badP.length) { pSt = "match"; pDet = "Record: <b>" + esc(r.fPrice) + "</b>. Text states: <b>$" + foundNums.join(", $") + "</b>."; }
+            else if (!foundNums.length && textFree) { pSt = "conflict"; pDet = "Record: <b>" + esc(r.fPrice) + "</b>. Text says <b>free</b>."; }
+            else { pSt = "conflict"; pDet = "Record: <b>" + esc(r.fPrice) + "</b>. Text states: <b>$" + foundNums.join(", $") + "</b>."; }
+          }
+          rows.push(row("Price", pSt, pDet)); tally(pSt);
+        }
+
+        // Ages
+        if (r.fAges) {
+          var canonAgeNums = (r.fAges.match(/\d{1,2}/g) || []);
+          var foundAges = extractAges(text);
+          var aSt, aDet;
+          if (!foundAges.length) {
+            aSt = "missing";
+            aDet = "The record lists ages <b>" + esc(r.fAges) + "</b>. The pasted text states no ages.";
+          } else {
+            var allNums = [];
+            foundAges.forEach(function (a) { allNums = allNums.concat(a.nums); });
+            var badA = allNums.filter(function (n) { return canonAgeNums.indexOf(n) < 0; });
+            var shownA = foundAges.map(function (a) { return a.raw.trim(); }).join("; ");
+            if (!badA.length) { aSt = "match"; aDet = "Record: <b>" + esc(r.fAges) + "</b>. Text states: <b>" + esc(shownA) + "</b>."; }
+            else { aSt = "conflict"; aDet = "Record: <b>" + esc(r.fAges) + "</b>. Text states: <b>" + esc(shownA) + "</b>."; }
+          }
+          rows.push(row("Ages", aSt, aDet)); tally(aSt);
+        }
+
+        results.innerHTML = rows.join("");
+        results.classList.add("show");
+        if (conflicts > 0) {
+          verdict.className = "verdict show no";
+          verdict.textContent = conflicts + (conflicts === 1 ? " conflict" : " conflicts") + " with the record in the " + channel.toLowerCase() + " text. Fix the text \u2014 or, if the text is right, fix the record and regenerate everything from it.";
+        } else if (missing > 0) {
+          verdict.className = "verdict show mid";
+          verdict.textContent = "No conflicts in the " + channel.toLowerCase() + " text \u2014 " + matches + (matches === 1 ? " field matches" : " fields match") + ", " + missing + (missing === 1 ? " field is" : " fields are") + " not stated and can't be confirmed.";
+        } else {
+          verdict.className = "verdict show ok";
+          verdict.textContent = "Uniform. Every stated field in the " + channel.toLowerCase() + " text matches the record.";
+        }
+      });
+    </script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+/* ---------- Main Event: Firebase save/load + Google push ---------- */
+(function () {
+  "use strict";
+
+  // Public Firebase web config (same project as Arts Fired). The apiKey here
+  // is a public client identifier, not a secret.
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDcw3y_l_xxvsuoPrEJRQGSLua7CPsoQYo",
+    authDomain: "fired-arts-dashboard.firebaseapp.com",
+    projectId: "fired-arts-dashboard",
+    storageBucket: "fired-arts-dashboard.firebasestorage.app",
+    messagingSenderId: "369187068047",
+    appId: "1:369187068047:web:1305bcbb9f93c2eaadb8fa"
+  };
+  // Google OAuth client ID for Calendar/Sheets push. Set this after creating
+  // a Web OAuth client in Google Cloud Console (see README). Empty = the
+  // Google push buttons say what is still needed.
+  var GOOGLE_OAUTH_CLIENT_ID = "";
+  // Google Sheet to append event rows to. Empty = the Sheet button says
+  // what is still needed.
+  var GOOGLE_SHEET_ID = "";
+
+  var ALLOWLIST = ["kylematthewberry@gmail.com", "rochelleberry731@gmail.com"];
+  var COLLECTION = "mainEvent_events";
+
+  var auth = null, db = null, currentUser = null, loadedDocId = null;
+  var gisToken = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function status(msg) { var el = $("meStatus"); if (el) el.textContent = msg; }
+
+  function initFirebase() {
+    if (typeof firebase === "undefined") { status("Firebase did not load. Check the connection and reload."); return; }
+    firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    auth.onAuthStateChanged(function (user) {
+      currentUser = user;
+      updateAuthUI();
+      if (user) { loadSavedList(); }
+    });
+  }
+
+  function updateAuthUI() {
+    var btn = $("meAuthBtn"), label = $("meAuthLabel");
+    if (!btn || !label) return;
+    if (currentUser) {
+      label.textContent = "Signed in as " + currentUser.email;
+      btn.textContent = "Sign out";
+    } else {
+      label.textContent = "Sign in to save events";
+      btn.textContent = "Sign in with Google";
+    }
+  }
+
+  function signInOut() {
+    if (!auth) { status("Firebase did not load. Check the connection and reload."); return; }
+    if (currentUser) { auth.signOut(); return; }
+    var provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).then(function (result) {
+      var email = (result.user.email || "").toLowerCase();
+      if (ALLOWLIST.indexOf(email) < 0) {
+        auth.signOut();
+        status("That Google account is not on the studio list. Use the studio account.");
+      }
+    }).catch(function (err) {
+      status("Sign-in failed. " + (err && err.message ? err.message : ""));
+    });
+  }
+
+  function recordFromForm() {
+    var r = getRecord();
+    return {
+      title: r.fTitle, date: r.fDate, startTime: r.fStart, endTime: r.fEnd,
+      price: r.fPrice, ages: r.fAges, location: r.fLocation,
+      description: r.fDesc, link: r.fLink
+    };
+  }
+
+  function formFromRecord(d) {
+    $("fTitle").value = d.title || "";
+    $("fDate").value = d.date || "";
+    $("fStart").value = d.startTime || "";
+    $("fEnd").value = d.endTime || "";
+    $("fPrice").value = d.price || "";
+    $("fAges").value = d.ages || "";
+    $("fLocation").value = d.location || "";
+    $("fDesc").value = d.description || "";
+    $("fLink").value = d.link || "";
+    render();
+  }
+
+  function clearForm() {
+    loadedDocId = null;
+    formFromRecord({});
+    status("");
+  }
+
+  function saveEvent() {
+    if (!currentUser) { status("Sign in first to save."); return; }
+    var r = getRecord();
+    if (!r.hasCore) { status("Fill in the name, date, and start time first."); return; }
+    var data = recordFromForm();
+    data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    data.createdBy = currentUser.email;
+    function done() { status("Saved."); loadSavedList(); }
+    function fail(e) { status("Save failed. " + (e && e.message ? e.message : "")); }
+    if (loadedDocId) {
+      db.collection(COLLECTION).doc(loadedDocId).set(data, { merge: true }).then(done, fail);
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      db.collection(COLLECTION).add(data).then(function (ref) { loadedDocId = ref.id; done(); }, fail);
+    }
+  }
+
+  function loadSavedList() {
+    var list = $("meSavedList");
+    if (!list) return;
+    if (!currentUser) { list.innerHTML = '<li class="me-empty">Sign in to see saved events.</li>'; return; }
+    db.collection(COLLECTION).orderBy("updatedAt", "desc").limit(50).get().then(function (snap) {
+      list.innerHTML = "";
+      if (snap.empty) { list.innerHTML = '<li class="me-empty">No saved events yet.</li>'; return; }
+      snap.forEach(function (doc) {
+        var d = doc.data();
+        var li = document.createElement("li");
+        var b = document.createElement("button");
+        b.type = "button"; b.className = "me-saved";
+        b.textContent = (d.title || "Untitled") + " \u2014 " + (d.date || "");
+        b.addEventListener("click", function () { loadedDocId = doc.id; formFromRecord(d); status("Loaded."); });
+        var del = document.createElement("button");
+        del.type = "button"; del.className = "btn plain me-del"; del.textContent = "Delete";
+        del.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          db.collection(COLLECTION).doc(doc.id).delete().then(function () {
+            if (loadedDocId === doc.id) loadedDocId = null;
+            status("Deleted."); loadSavedList();
+          }, function (e) { status("Delete failed. " + (e && e.message ? e.message : "")); });
+        });
+        li.appendChild(b); li.appendChild(del);
+        list.appendChild(li);
+      });
+    }, function () { list.innerHTML = '<li class="me-empty">Could not load saved events.</li>'; });
+  }
+
+  function isoLocal(d, mins) {
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(Math.floor(mins / 60)) + ":" + p(mins % 60) + ":00";
+  }
+
+  function requestGoogleToken(scopes, cb) {
+    if (!GOOGLE_OAUTH_CLIENT_ID) { status("Google push needs an OAuth client ID. See README."); return; }
+    if (typeof google === "undefined" || !google.accounts) { status("Google script did not load. Check the connection and reload."); return; }
+    var client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_OAUTH_CLIENT_ID,
+      scope: scopes,
+      callback: function (resp) {
+        if (resp && resp.access_token) { gisToken = resp.access_token; cb(); }
+        else { status("Google sign-in was not completed."); }
+      }
+    });
+    client.requestAccessToken();
+  }
+
+  function pushToCalendar() {
+    var r = getRecord();
+    if (!r.hasCore) { status("Fill in the name, date, and start time first."); return; }
+    requestGoogleToken("https://www.googleapis.com/auth/calendar.events", function () {
+      var endMin = r.endMin != null ? r.endMin : r.startMin + 60;
+      var gcalPre = $("pre-gcal");
+      var body = {
+        summary: r.fTitle,
+        description: (gcalPre ? gcalPre.textContent : "") + (r.fLink ? "\n" + r.fLink : ""),
+        location: r.fLocation || undefined,
+        start: { dateTime: isoLocal(r.dateObj, r.startMin), timeZone: "America/Indiana/Indianapolis" },
+        end: { dateTime: isoLocal(r.dateObj, endMin), timeZone: "America/Indiana/Indianapolis" }
+      };
+      fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + gisToken, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        status(data && data.htmlLink ? "Added to Google Calendar." : "Calendar add failed.");
+      }).catch(function () { status("Calendar add failed."); });
+    });
+  }
+
+  function pushToSheet() {
+    var r = getRecord();
+    if (!r.hasCore) { status("Fill in the name, date, and start time first."); return; }
+    if (!GOOGLE_SHEET_ID) { status("Google Sheets needs a target sheet. See README."); return; }
+    requestGoogleToken("https://www.googleapis.com/auth/spreadsheets", function () {
+      var row = [r.fTitle,
+        r.dateObj ? MONTHS[r.dateObj.getMonth()] + " " + r.dateObj.getDate() + ", " + r.dateObj.getFullYear() : "",
+        r.dateObj ? DAYS[r.dateObj.getDay()] : "",
+        r.startMin != null ? fmtTime(r.startMin) : "",
+        r.endMin != null ? fmtTime(r.endMin) : "",
+        r.fPrice, r.fAges, r.fLocation, r.fDesc, r.fLink];
+      fetch("https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(GOOGLE_SHEET_ID) + "/values/A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + gisToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ values: [row] })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        status(data && data.updates ? "Row added to the sheet." : "Sheet add failed.");
+      }).catch(function () { status("Sheet add failed."); });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var authBtn = $("meAuthBtn");
+    if (authBtn) authBtn.addEventListener("click", signInOut);
+    var saveBtn = $("meSaveBtn");
+    if (saveBtn) saveBtn.addEventListener("click", saveEvent);
+    var newBtn = $("meNewBtn");
+    if (newBtn) newBtn.addEventListener("click", clearForm);
+    var calBtn = $("meCalBtn");
+    if (calBtn) calBtn.addEventListener("click", pushToCalendar);
+    var sheetBtn = $("meSheetBtn");
+    if (sheetBtn) sheetBtn.addEventListener("click", pushToSheet);
+    initFirebase();
+  });
+})();
+
+    </script>
+  </body>
+</html>

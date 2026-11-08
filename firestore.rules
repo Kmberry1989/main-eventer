@@ -1,0 +1,373 @@
+rules_version = '2';
+
+// Fired Arts Firebase project (fired-arts-dashboard) — shared rules.
+// IMPORTANT: deploying this file REPLACES the entire Firestore ruleset.
+// It merges the Growth HQ workspace rules with the Piece Tracker rules.
+//
+// MERGE POLICY (2026-10-15): the Firebase console is the source of truth for
+// the live ruleset. This file must always be produced by merging new changes
+// INTO the live console rules — never by blind-replacing the console with an
+// older repo copy. Blind replaces have twice deleted live rules (intake
+// collections, /hq block, allowlist entries).
+//
+// Deploy: Firebase console → Firestore Database → Rules (paste this file),
+// or `firebase deploy --only firestore:rules` from a machine with firebase-tools auth.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Google-staff gate: the staff Google accounts.
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in [
+          "kylematthewberry@gmail.com",
+          "firedartsmanager@gmail.com",
+          "firedartsstaff@gmail.com",
+          "rochelleberry731@gmail.com"
+        ];
+    }
+
+    // Admin is HARDCODED to exactly these four Google accounts. The
+    // staffAccounts role field is display-only; it grants nothing.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in [
+          "kylematthewberry@gmail.com",
+          "rochelleberry731@gmail.com",
+          "media@firedartsstudio.com",
+          "admin@firedartsstudio.com"
+        ];
+    }
+
+    // Anonymous (name+phone) staff: their Firebase uid links to a
+    // staffSessions doc pointing at their staffAccounts doc.
+    function sessionAccountId() {
+      return get(/databases/$(database)/documents/pieceTracker_staffSessions/$(request.auth.uid)).data.accountId;
+    }
+    function isLinkedStaff() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/pieceTracker_staffSessions/$(request.auth.uid))
+        && get(/databases/$(database)/documents/pieceTracker_staffAccounts/$(sessionAccountId())).data.status == "active";
+    }
+    // Staff = allowlisted Google accounts, hardcoded admins, or linked
+    // active phone staff. (isAdmin() is included so the media@/admin@
+    // accounts, which are not in isOwner(), still get staff data access.)
+    function isStaff() {
+      return isOwner() || isAdmin() || isLinkedStaff();
+    }
+
+    // Training-mode variants (same logic, training_ collections).
+    function tSessionAccountId() {
+      return get(/databases/$(database)/documents/training_pieceTracker_staffSessions/$(request.auth.uid)).data.accountId;
+    }
+    function tIsLinkedStaff() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/training_pieceTracker_staffSessions/$(request.auth.uid))
+        && get(/databases/$(database)/documents/training_pieceTracker_staffAccounts/$(tSessionAccountId())).data.status == "active";
+    }
+    function tIsStaff() {
+      return isOwner() || isAdmin() || tIsLinkedStaff();
+    }
+
+    // ---- Fired Arts Regional Growth HQ (existing) ----
+    // Shared workspace state lives under /hq/{key} (one document per state key).
+    match /hq/{document=**} {
+      allow read, write: if isOwner();
+    }
+
+    // Private customer data — staff only.
+    match /pieceTracker_piecePrivate/{pieceId} {
+      allow read, write: if isStaff();
+    }
+
+    // Internal staff notes — staff only.
+    match /pieceTracker_notes/{noteId} {
+      allow read, write: if isStaff();
+    }
+
+    // Recent activity feed — staff only.
+    match /pieceTracker_activity/{activityId} {
+      allow read, write: if isStaff();
+    }
+
+    // Messaging metadata — staff only.
+    match /pieceTracker_comms/{commsId} {
+      allow read, write: if isStaff();
+    }
+
+    // Pieces: staff read/write; public read access is intentionally locked
+    // down here — the customer portal is served by the server API which
+    // uses the Admin SDK (bypasses rules).
+    match /pieceTracker_pieces/{pieceId} {
+      allow read, write: if isStaff();
+    }
+
+    // Messages — staff only.
+    match /pieceTracker_messages/{messageId} {
+      allow read, write: if isStaff();
+    }
+
+    // Customer self-service intake — public create; staff read/update/delete.
+    match /pieceTracker_intake/{intakeId} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+
+    // Customer self-service intake — public create; staff read/update/delete.
+    match /pieceTracker_intakeForm/{formId} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+
+    // Newsletter signup requests — public create; staff read/update/delete.
+    match /pieceTracker_newsletterQueue/{qid} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+    match /pieceTracker_feedback/{fid} {
+    allow create: if true;
+    allow read, update, delete: if isStaff();
+    }
+    match /training_pieceTracker_feedback/{fid} {
+    allow create: if true;
+    allow read, update, delete: if tIsStaff();
+    }
+    match /training_pieceTracker_newsletterQueue/{qid} {
+      allow create: if true;
+      allow read, update, delete: if tIsStaff();
+    }
+
+    // Satisfaction survey responses — staff read only; writes go through the
+    // server API (admin SDK), never directly from clients.
+    match /pieceTracker_satisfaction/{responseId} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+
+    // Review-ask log — staff read only; writes go through the server API.
+    match /pieceTracker_reviewAsks/{askId} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+
+    // Kiln loads (label + date + piece IDs only, no PII) — public get for the
+    // customer "in this week's firing" banner; all writes staff-only.
+    match /pieceTracker_loads/{loadId} {
+      allow get: if true;
+      allow list, create, update, delete: if isStaff();
+    }
+
+    // Firing log — staff only.
+    match /pieceTracker_firingLogs/{logId} {
+      allow read, write: if isStaff();
+    }
+
+    // Breakage / waste log — staff only.
+    match /pieceTracker_breakageLogs/{logId} {
+      allow read, write: if isStaff();
+    }
+
+    // Completed kiln checklists — staff only.
+    match /pieceTracker_checklistRuns/{runId} {
+      allow read, write: if isStaff();
+    }
+
+    // Studio settings — staff read, admin write only.
+    match /pieceTracker_settings/{docId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // ---- Staff management ----
+    // Staff accounts — doc id is the lowercase email (Google staff) or
+    // phone_<digits> (phone staff). Any signed-in user can read (role lookup
+    // at sign-in). Google users can create their own doc (email match);
+    // anonymous phone staff can self-register their own phone_<digits> doc
+    // as pending. Admins can write any doc. Staff can update ONLY their own
+    // doc, and only name/phone/onboarded/lastSeen (Google via email match,
+    // phone staff via their linked session, any status).
+    match /pieceTracker_staffAccounts/{accountId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == accountId;
+      allow create: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider == "anonymous"
+        && ("phone_" + request.resource.data.phone) == accountId
+        && request.resource.data.kind == "phone"
+        && request.resource.data.role == "staff"
+        && request.resource.data.status == "pending"
+        && request.resource.data.onboarded == false
+        && request.resource.data.name.size() > 0
+        && request.resource.data.phone.size() >= 7;
+      allow update: if request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == accountId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "phone", "onboarded", "lastSeen"]);
+      allow update: if request.auth != null
+        && exists(/databases/$(database)/documents/pieceTracker_staffSessions/$(request.auth.uid))
+        && sessionAccountId() == accountId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "phone", "onboarded", "lastSeen"]);
+      allow update, delete: if isAdmin();
+    }
+
+    // Approval queue — staff create own pending requests and read own; admins read all and decide.
+    // Anonymous phone staff act through their linked session.
+    match /pieceTracker_approvals/{approvalId} {
+      allow read: if isAdmin()
+        || (request.auth != null && request.auth.token.email != null && resource.data.requestedBy == request.auth.token.email.lower())
+        || (isLinkedStaff() && resource.data.requestedBy == sessionAccountId());
+      allow create: if request.auth != null
+        && request.resource.data.status == "pending"
+        && (
+          (request.auth.token.email != null && request.resource.data.requestedBy == request.auth.token.email.lower())
+          || (isLinkedStaff() && request.resource.data.requestedBy == sessionAccountId())
+        );
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // Anonymous phone sign-in sessions: uid -> accountId. The client writes
+    // {accountId, phone}; the phone must match the account's stored phone.
+    // Pending accounts may link a session (self-registration); data access
+    // still requires an active account via isStaff().
+    match /pieceTracker_staffSessions/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid
+        && exists(/databases/$(database)/documents/pieceTracker_staffAccounts/$(request.resource.data.accountId))
+        && get(/databases/$(database)/documents/pieceTracker_staffAccounts/$(request.resource.data.accountId)).data.phone == request.resource.data.phone;
+      allow update: if false;
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+    }
+
+    match /training_pieceTracker_staffAccounts/{accountId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == accountId;
+      allow create: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider == "anonymous"
+        && ("phone_" + request.resource.data.phone) == accountId
+        && request.resource.data.kind == "phone"
+        && request.resource.data.role == "staff"
+        && request.resource.data.status == "pending"
+        && request.resource.data.onboarded == false
+        && request.resource.data.name.size() > 0
+        && request.resource.data.phone.size() >= 7;
+      allow update: if request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == accountId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "phone", "onboarded", "lastSeen"]);
+      allow update: if request.auth != null
+        && exists(/databases/$(database)/documents/training_pieceTracker_staffSessions/$(request.auth.uid))
+        && tSessionAccountId() == accountId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name", "phone", "onboarded", "lastSeen"]);
+      allow update, delete: if isAdmin();
+    }
+    match /training_pieceTracker_approvals/{approvalId} {
+      allow read: if isAdmin()
+        || (request.auth != null && request.auth.token.email != null && resource.data.requestedBy == request.auth.token.email.lower())
+        || (tIsLinkedStaff() && resource.data.requestedBy == tSessionAccountId());
+      allow create: if request.auth != null
+        && request.resource.data.status == "pending"
+        && (
+          (request.auth.token.email != null && request.resource.data.requestedBy == request.auth.token.email.lower())
+          || (tIsLinkedStaff() && request.resource.data.requestedBy == tSessionAccountId())
+        );
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+    match /training_pieceTracker_staffSessions/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid
+        && exists(/databases/$(database)/documents/training_pieceTracker_staffAccounts/$(request.resource.data.accountId))
+        && get(/databases/$(database)/documents/training_pieceTracker_staffAccounts/$(request.resource.data.accountId)).data.phone == request.resource.data.phone;
+      allow update: if false;
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+    }
+
+    // ---- Training mode (sandboxed demo data) ----
+    // Namespaced demo collections — deliberately NEVER public, staff-only
+    // under the same gates. Training pieces have no public customer page.
+    match /training_pieceTracker_pieces/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_piecePrivate/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_notes/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_activity/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_comms/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_loads/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_firingLogs/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_breakageLogs/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_checklistRuns/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_messages/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_pieceTracker_settings/{docId} {
+      allow read: if tIsStaff();
+      allow write: if isAdmin();
+    }
+
+    // Certification records + scenario progress — staff-only.
+    match /training_certs/{docId} {
+      allow read, write: if tIsStaff();
+    }
+    match /training_progress/{docId} {
+      allow read, write: if tIsStaff();
+    }
+
+    // ---- Fired Arts Daily Public-Info Audit (added 2026-11-07) ----
+    // auditResolutions: one doc per issue, doc id = issue number ("1".."19").
+    // Fields: resolved (boolean), resolvedAt, resolvedBy (email), note.
+    // Public read so the report page can show resolution state; writes
+    // restricted to Kyle and Rochelle (lowercased email match).
+    function isAuditWriter() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in [
+          "kylematthewberry@gmail.com",
+          "rochelleberry731@gmail.com"
+        ];
+    }
+
+    match /auditResolutions/{issueId} {
+      allow read: if true;
+      allow create, update: if isAuditWriter()
+        && (!("resolved" in request.resource.data)
+            || request.resource.data.resolved is bool);
+      allow delete: if isAuditWriter();
+    }
+
+    // ---- Main Event (added 2026-11-08) ----
+    // mainEvent_events: one doc per saved event record.
+    // Fields: title, date, startTime, endTime, price, ages, location,
+    // description, link, createdAt, updatedAt, createdBy (email).
+    // Read/write restricted to Kyle and Rochelle (same allowlist as the audit).
+    match /mainEvent_events/{eventId} {
+      allow read, write: if isAuditWriter();
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
