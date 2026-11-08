@@ -154,17 +154,32 @@ something was left out.
 
 ## Saved events
 
-**Sign in with Google** (top of the page) signs in with a Google
-account. Only the studio accounts can save:
-`kylematthewberry@gmail.com` and `rochelleberry731@gmail.com`. The same
-allowlist is enforced by the Firestore rules.
+**Sign in with Google** (top of the page) signs in with any Google
+account. Studio accounts (`kylematthewberry@gmail.com` and
+`rochelleberry731@gmail.com`) get the Fired Arts workspace; everyone
+else gets their own personal workspace, set up on first sign-in by the
+[setup wizard](setup.html). Each workspace sees only its own saved
+events.
 
-- **Save event** saves the current record to Firestore (collection
-  `mainEvent_events`, project `fired-arts-dashboard`). Saving a record
-  that is already loaded updates it; saving a new one creates it.
+- **Save event** saves the current record to Firestore (studio:
+  collection `mainEvent_events`; personal:
+  `mainEvent_workspaces/{uid}/events`, project
+  `fired-arts-dashboard`). Saving a record that is already loaded
+  updates it; saving a new one creates it.
 - **Saved events** lists the saved records. Tap one to load it into
   the form. **Delete** removes it.
 - **New event** clears the form.
+
+## Setup wizard
+
+[Setup](setup.html) walks a new user through five steps: sign in with
+Google; business details (name, location, timezone, default host,
+hashtags); Google (Sheet, Calendar, Apps Script); social fan-out
+(optional); done. It fills in the Apps Script file with the user's own
+Sheet and Calendar IDs, and tests the connection before finishing.
+The Fired Arts studio workspace is untouched — studio accounts never
+see the wizard. What the wizard automates, what stays manual, and
+what would fully automate it are in `SETUP.md`.
 
 ## Tutorial and Help
 

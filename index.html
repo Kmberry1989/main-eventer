@@ -378,7 +378,7 @@
           </section>
         </div>
       </div>
-      <footer class="fineprint nonsel"><a href="manual.html">Help</a></footer>
+      <footer class="fineprint nonsel"><a href="setup.html">Setup</a> · <a href="manual.html">Help</a></footer>
     </div>
 
     <div class="tut-backdrop" id="tutBackdrop">
@@ -396,6 +396,13 @@
     <script>
       "use strict";
       var $ = function (id) { return document.getElementById(id); };
+      // Workspace-driven values. Studio defaults below; a personal
+      // workspace (see the Firebase block) overrides them.
+      var ME_TAGS = {
+        instagram: "#FiredArtsStudio #KokomoIN #PaintYourOwnPottery",
+        tiktok: "#FiredArtsStudio #KokomoIN #PYOP"
+      };
+      var ME_TZ = "America/Indiana/Indianapolis";
       var FIELDS = ["fTitle", "fDate", "fStart", "fEnd", "fPrice", "fAges", "fHost", "fLocation", "fDesc", "fLink"];
 
       var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -487,7 +494,7 @@
           } },
         { id: "instagram", name: "Instagram caption", tag: "Social", build: function (r) {
             var head = r.fTitle + (r.dateObj ? " \u2022 " + fmtDateShort(r.dateObj) + (r.startMin != null ? " \u2022 " + timeRange(r, true) : "") : "");
-            var tags = "#FiredArtsStudio #KokomoIN #PaintYourOwnPottery";
+            var tags = ME_TAGS.instagram;
             return joinParts(head, r.fDesc, detailLines(r).slice(1).join("\n"), r.fLink ? "Link in bio to register" : "", tags);
           } },
         { id: "threads", name: "Threads post", tag: "Social", build: function (r) {
@@ -509,7 +516,7 @@
             if (r.fHost) bits.push("Hosted by " + r.fHost);
             var s = bits.join(" ");
             if (r.fLink) s += (s ? "\n" : "") + "Register: " + r.fLink;
-            if (s) s += "\n#FiredArtsStudio #KokomoIN #PYOP";
+            if (s && ME_TAGS.tiktok) s += "\n" + ME_TAGS.tiktok;
             return s;
           } },
         { id: "pinterest", name: "Pinterest description", tag: "Social", build: function (r) {
@@ -590,8 +597,8 @@
         var desc = (preById.gcal.textContent || "").replace(/\n/g, "\\n");
         var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Main Eventer//EN", "BEGIN:VEVENT",
           "UID:" + Date.now() + "@main-eventer",
-          "DTSTART;TZID=America/Indiana/Indianapolis:" + icsStamp(r.dateObj, r.startMin),
-          "DTEND;TZID=America/Indiana/Indianapolis:" + icsStamp(r.dateObj, endMin),
+          "DTSTART;TZID=" + ME_TZ + ":" + icsStamp(r.dateObj, r.startMin),
+          "DTEND;TZID=" + ME_TZ + ":" + icsStamp(r.dateObj, endMin),
           "SUMMARY:" + r.fTitle,
           r.fLocation ? "LOCATION:" + r.fLocation : "",
           "DESCRIPTION:" + desc,
@@ -651,7 +658,7 @@
             var url = "https://calendar.google.com/calendar/render?action=TEMPLATE" +
               "&text=" + encodeURIComponent(r.fTitle) +
               "&dates=" + dates +
-              "&ctz=America/Indiana/Indianapolis" +
+              "&ctz=" + encodeURIComponent(ME_TZ) +
               "&details=" + encodeURIComponent(preById.gcal.textContent || "") +
               (r.fLocation ? "&location=" + encodeURIComponent(r.fLocation) : "");
             link.href = url; link.removeAttribute("disabled");
@@ -909,15 +916,26 @@
   // Google Apps Script web app URL for the Google push (see Code.gs and
   // README). Empty = the Push to Google button says what is still needed.
   // The Sheet ID and Calendar ID live in Code.gs, not here.
-  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBZ2JuzXEJRqZ-kXMIvmCiZtc5dGg4u9pQCLDrva8v91_PwPKygLfRcdg1Q5NI9w3K/exec";
+  // This URL is the STUDIO (Fired Arts) endpoint. A personal workspace
+  // (setup.html) stores its own URL instead — see pushUrl() below.
+  var STUDIO_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBZ2JuzXEJRqZ-kXMIvmCiZtc5dGg4u9pQCLDrva8v91_PwPKygLfRcdg1Q5NI9w3K/exec";
   // Optional shared secret. If set, it must match SECRET_KEY in Code.gs.
   // Leave empty unless a secret is set in the script.
-  var APPS_SCRIPT_KEY = "";
+  var STUDIO_APPS_SCRIPT_KEY = "";
 
   var ALLOWLIST = ["kylematthewberry@gmail.com", "rochelleberry731@gmail.com"];
   var COLLECTION = "mainEvent_events";
+  // Personal workspaces: one doc per user in mainEvent_workspaces/{uid},
+  // with an events subcollection. Owner-scoped by the Firestore rules —
+  // any signed-in Google user gets their own workspace. The studio
+  // allowlist above only picks the Fired Arts workspace; it no longer
+  // signs anyone out.
+  var WS_COLLECTION = "mainEvent_workspaces";
+  var LS_WS = "me_workspace";
+  var LS_SKIP = "me_setup_skipped";
 
   var auth = null, db = null, currentUser = null, loadedDocId = null;
+  var isStudio = false, personalWorkspace = null;
   var $ = function (id) { return document.getElementById(id); };
 
   function status(msg) { var el = $("meStatus"); if (el) el.textContent = msg; }
@@ -929,9 +947,74 @@
     db = firebase.firestore();
     auth.onAuthStateChanged(function (user) {
       currentUser = user;
+      isStudio = !!(user && ALLOWLIST.indexOf((user.email || "").toLowerCase()) >= 0);
+      personalWorkspace = null;
       updateAuthUI();
-      if (user) { loadSavedList(); }
+      if (!user) return;
+      if (isStudio) { loadSavedList(); return; }
+      loadPersonalWorkspace();
     });
+  }
+
+  function eventsRef() {
+    if (!db || !currentUser) return null;
+    if (isStudio) return db.collection(COLLECTION);
+    if (personalWorkspace) return db.collection(WS_COLLECTION).doc(currentUser.uid).collection("events");
+    return null;
+  }
+
+  function pushUrl() {
+    if (isStudio) return STUDIO_APPS_SCRIPT_URL;
+    return (personalWorkspace && personalWorkspace.appsScriptUrl) || "";
+  }
+
+  function pushKey() {
+    if (isStudio) return STUDIO_APPS_SCRIPT_KEY;
+    return (personalWorkspace && personalWorkspace.appsScriptKey) || "";
+  }
+
+  function applyWorkspace() {
+    if (!personalWorkspace) return;
+    if (personalWorkspace.hashtags) {
+      ME_TAGS.instagram = personalWorkspace.hashtags;
+      ME_TAGS.tiktok = personalWorkspace.hashtags;
+    }
+    if (personalWorkspace.timezone) ME_TZ = personalWorkspace.timezone;
+    var hostEl = $("fHost"), locEl = $("fLocation");
+    if (hostEl && !hostEl.value.trim() && personalWorkspace.defaultHost) hostEl.value = personalWorkspace.defaultHost;
+    if (locEl && !locEl.value.trim() && personalWorkspace.location) locEl.value = personalWorkspace.location;
+    render();
+  }
+
+  // Personal workspace: cloud doc first, device mirror as fallback.
+  // No workspace and no skip flag = first run -> the setup wizard.
+  function loadPersonalWorkspace() {
+    var skipped = false, mirror = null;
+    try { skipped = !!localStorage.getItem(LS_SKIP); } catch (e) {}
+    try { var raw = localStorage.getItem(LS_WS); if (raw) mirror = JSON.parse(raw); } catch (e) {}
+    db.collection(WS_COLLECTION).doc(currentUser.uid).get().then(function (doc) {
+      if (doc.exists) {
+        personalWorkspace = doc.data() || {};
+        try { localStorage.setItem(LS_WS, JSON.stringify(personalWorkspace)); } catch (e) {}
+      } else if (mirror && mirror.ownerUid === currentUser.uid) {
+        personalWorkspace = mirror;
+      }
+      afterWorkspaceLoad(skipped);
+    }, function () {
+      if (mirror && mirror.ownerUid === currentUser.uid) personalWorkspace = mirror;
+      afterWorkspaceLoad(skipped);
+    });
+  }
+
+  function afterWorkspaceLoad(skipped) {
+    if (personalWorkspace) {
+      applyWorkspace();
+      loadSavedList();
+    } else if (!skipped) {
+      location.href = "setup.html";
+    } else {
+      loadSavedList();
+    }
   }
 
   function updateAuthUI() {
@@ -950,13 +1033,10 @@
     if (!auth) { status("Firebase did not load. Check the connection and reload."); return; }
     if (currentUser) { auth.signOut(); return; }
     var provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).then(function (result) {
-      var email = (result.user.email || "").toLowerCase();
-      if (ALLOWLIST.indexOf(email) < 0) {
-        auth.signOut();
-        status("That Google account is not on the studio list. Use the studio account.");
-      }
-    }).catch(function (err) {
+    // Any Google account can sign in. Studio accounts get the Fired Arts
+    // workspace; everyone else gets their own personal workspace
+    // (setup.html on first run).
+    auth.signInWithPopup(provider).catch(function (err) {
       status("Sign-in failed. " + (err && err.message ? err.message : ""));
     });
   }
@@ -992,6 +1072,8 @@
 
   function saveEvent() {
     if (!currentUser) { status("Sign in first to save."); return; }
+    var ref = eventsRef();
+    if (!ref) { status("Finish setup to save."); return; }
     var r = getRecord();
     if (!r.hasAny) { status("Nothing to save."); return; }
     var data = recordFromForm();
@@ -1000,10 +1082,10 @@
     function done() { status("Saved."); loadSavedList(); }
     function fail(e) { status("Save failed. " + (e && e.message ? e.message : "")); }
     if (loadedDocId) {
-      db.collection(COLLECTION).doc(loadedDocId).set(data, { merge: true }).then(done, fail);
+      ref.doc(loadedDocId).set(data, { merge: true }).then(done, fail);
     } else {
       data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      db.collection(COLLECTION).add(data).then(function (ref) { loadedDocId = ref.id; done(); }, fail);
+      ref.add(data).then(function (ref2) { loadedDocId = ref2.id; done(); }, fail);
     }
   }
 
@@ -1011,7 +1093,9 @@
     var list = $("meSavedList");
     if (!list) return;
     if (!currentUser) { list.innerHTML = '<li class="me-empty">Sign in to see saved events.</li>'; return; }
-    db.collection(COLLECTION).orderBy("updatedAt", "desc").limit(50).get().then(function (snap) {
+    var ref = eventsRef();
+    if (!ref) { list.innerHTML = '<li class="me-empty">Finish setup to save events.</li>'; return; }
+    ref.orderBy("updatedAt", "desc").limit(50).get().then(function (snap) {
       list.innerHTML = "";
       if (snap.empty) { list.innerHTML = '<li class="me-empty">No saved events yet.</li>'; return; }
       snap.forEach(function (doc) {
@@ -1025,7 +1109,7 @@
         del.type = "button"; del.className = "btn plain me-del"; del.textContent = "Delete";
         del.addEventListener("click", function (ev) {
           ev.stopPropagation();
-          db.collection(COLLECTION).doc(doc.id).delete().then(function () {
+          ref.doc(doc.id).delete().then(function () {
             if (loadedDocId === doc.id) loadedDocId = null;
             status("Deleted."); loadSavedList();
           }, function (e) { status("Delete failed. " + (e && e.message ? e.message : "")); });
@@ -1039,10 +1123,11 @@
   function pushToGoogle() {
     var r = getRecord();
     if (!(r.fTitle && r.dateObj && r.startMin != null)) { status("Add a name, date, and start time to push to Google."); return; }
-    if (!APPS_SCRIPT_URL) { status("Google push needs the Apps Script web app URL. See README."); return; }
+    var scriptUrl = pushUrl();
+    if (!scriptUrl) { status("Finish setup to connect Google."); return; }
     var fbPre = $("pre-facebook"), thPre = $("pre-threads"), gcalPre = $("pre-gcal");
     var payload = {
-      key: APPS_SCRIPT_KEY || "",
+      key: pushKey() || "",
       title: r.fTitle,
       date: r.fDate,
       startTime: r.fStart,
@@ -1060,7 +1145,7 @@
     // text/plain (not application/json) so the browser sends no CORS
     // preflight, which Apps Script web apps do not answer. The body is
     // still a JSON string; Code.gs parses it.
-    fetch(APPS_SCRIPT_URL, {
+    fetch(scriptUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)

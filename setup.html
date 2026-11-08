@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Setup · Main Eventer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #faf6f1;
+        --surface: #ffffff;
+        --surface-2: #f3ece3;
+        --ink: #2b2118;
+        --ink-soft: #5d4f42;
+        --line: #ddd0c0;
+        --accent: #a44a24;
+        --accent-ink: #ffffff;
+        --good: #2e6b34;
+        --good-bg: #e2efe1;
+        --bad: #a12622;
+        --bad-bg: #f9e3e1;
+        --warn: #8a6414;
+        --warn-bg: #f7ecd2;
+        --chip: #efe7db;
+        --shadow: 0 1px 2px rgba(60, 38, 20, .06), 0 8px 24px rgba(60, 38, 20, .06);
+        --radius: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1d1712;
+          --surface: #2a211a;
+          --surface-2: #332820;
+          --ink: #f2e9df;
+          --ink-soft: #c4b3a1;
+          --line: #4a3a2d;
+          --accent: #e07a45;
+          --accent-ink: #241407;
+          --good: #9ed3a2;
+          --good-bg: #243d27;
+          --bad: #f2a49f;
+          --bad-bg: #472320;
+          --warn: #eacd8a;
+          --warn-bg: #453a1c;
+          --chip: #3a2d21;
+          --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+        }
+      }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Public Sans", system-ui, -apple-system, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      h1, h2, h3, p { margin: 0; }
+      button, input, select { font: inherit; color: inherit; }
+      .wrap { max-width: 680px; margin: 0 auto; padding: 28px 18px 64px; }
+      header.page { margin-bottom: 22px; }
+      header.page h1 {
+        font-family: "Lora", Georgia, serif;
+        font-size: clamp(30px, 5vw, 40px);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.12;
+      }
+      header.page p { margin-top: 8px; color: var(--ink-soft); font-size: 17px; }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+      .card h2 { font-family: "Lora", Georgia, serif; font-size: 21px; font-weight: 600; line-height: 1.25; }
+      .card .sub { color: var(--ink-soft); font-size: 14.5px; margin-top: 4px; }
+      .steps { font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; }
+      .step { display: none; }
+      .step.show { display: block; }
+      .field { margin-top: 14px; }
+      .field label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        margin-bottom: 5px;
+      }
+      .field input, .field select {
+        width: 100%;
+        box-sizing: border-box;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 10px 12px;
+        font-size: 16px;
+      }
+      .field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+      .btn {
+        appearance: none;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-radius: 9px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn.ghost { background: transparent; color: var(--accent); }
+      .btn.plain { background: var(--surface); border-color: var(--line); color: var(--ink); }
+      .btn:active { transform: translateY(1px); }
+      .btn[disabled] { opacity: .45; cursor: default; transform: none; }
+      .btn.copied { background: var(--good); border-color: var(--good); color: #fff; }
+      .nav { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .nav .spacer { flex: 1; }
+      .note { margin-top: 14px; font-size: 13.5px; color: var(--ink-soft); }
+      .note.good { color: var(--good); font-weight: 600; }
+      .note.bad { color: var(--bad); font-weight: 600; }
+      .mini { margin: 12px 0 0; padding-left: 22px; line-height: 1.7; font-size: 15px; }
+      .mini li + li { margin-top: 2px; }
+      .mini a { color: var(--accent); }
+      .summary { margin: 12px 0 0; padding: 0; list-style: none; }
+      .summary li { padding: 8px 0; border-top: 1px solid var(--line); font-size: 15px; }
+      .summary li b { font-weight: 700; }
+      .fineprint { text-align: center; font-size: 12px; color: var(--ink-soft); margin-top: 44px; }
+      .fineprint a { color: inherit; }
+      .kv { font-size: 15px; margin-top: 10px; }
+      .kv b { font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page">
+        <h1>Main Eventer</h1>
+        <p>Setup</p>
+      </header>
+
+      <p class="steps" id="stepLabel">Step 1 of 5</p>
+
+      <!-- Step 1: sign in -->
+      <section class="card step show" id="step1">
+        <h2>Sign in</h2>
+        <p class="sub">Sign in with Google to set up your workspace.</p>
+        <div class="nav">
+          <button class="btn" id="suAuthBtn" type="button">Sign in with Google</button>
+        </div>
+        <p class="kv" id="suSignedIn" style="display:none;">Signed in as <b id="suEmail"></b></p>
+        <div id="suStudio" style="display:none;">
+          <p class="note">Studio workspace — you're already set up.</p>
+          <div class="nav"><a class="btn" href="index.html">Open Main Eventer</a></div>
+        </div>
+        <div class="nav" id="suContinueRow" style="display:none;">
+          <button class="btn" id="suTo2" type="button">Continue</button>
+          <span class="spacer"></span>
+          <button class="btn plain" id="suSignOut" type="button">Sign out</button>
+        </div>
+        <p class="note" id="st1"></p>
+        <p class="fineprint"><a href="#" id="suSkip">Skip setup</a></p>
+      </section>
+
+      <!-- Step 2: business -->
+      <section class="card step" id="step2">
+        <h2>Your business</h2>
+        <p class="sub">Your details fill in your events.</p>
+        <div class="field">
+          <label for="suName">Business / studio name</label>
+          <input id="suName" type="text" autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="suLocation">Location</label>
+          <input id="suLocation" type="text" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="suTz">Timezone</label>
+          <select id="suTz"></select>
+        </div>
+        <div class="field">
+          <label for="suHost">Default host</label>
+          <input id="suHost" type="text" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="suTags">Hashtags</label>
+          <input id="suTags" type="text" autocomplete="off" placeholder="#YourStudio" />
+        </div>
+        <div class="nav">
+          <button class="btn plain" id="suBack1" type="button">Back</button>
+          <button class="btn" id="suTo3" type="button">Save &amp; continue</button>
+        </div>
+        <p class="note" id="st2"></p>
+      </section>
+
+      <!-- Step 3: Google -->
+      <section class="card step" id="step3">
+        <h2>Google</h2>
+        <p class="sub">Connect your Sheet and Calendar. One Apps Script does the push.</p>
+        <div class="field">
+          <label>Sheet</label>
+          <div class="nav" style="margin-top:0;">
+            <a class="btn ghost" href="https://sheets.new" target="_blank" rel="noopener">Create a Sheet</a>
+          </div>
+        </div>
+        <div class="field">
+          <label for="suSheetUrl">Sheet link</label>
+          <input id="suSheetUrl" type="url" inputmode="url" placeholder="Paste the Sheet link" />
+        </div>
+        <div class="nav">
+          <button class="btn plain" id="suUseSheet" type="button">Use this Sheet</button>
+        </div>
+        <p class="note" id="suSheetId"></p>
+        <div class="field">
+          <label for="suCalId">Calendar ID</label>
+          <input id="suCalId" type="text" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Apps Script</label>
+          <div class="nav" style="margin-top:0;">
+            <button class="btn" id="suCopyGs" type="button">Copy Code.gs</button>
+            <a class="btn ghost" href="Code.gs" download="Code.gs">Download Code.gs (raw)</a>
+            <a class="btn ghost" href="https://script.google.com/home" target="_blank" rel="noopener">Open Apps Script</a>
+          </div>
+        </div>
+        <ol class="mini">
+          <li>New project, paste the code.</li>
+          <li>Set the timezone to <b id="suTzEcho"></b>.</li>
+          <li>Deploy → Web app → Execute as Me → Anyone → Deploy.</li>
+          <li>Paste the web app URL below.</li>
+        </ol>
+        <div class="field">
+          <label for="suScriptUrl">Web app URL</label>
+          <input id="suScriptUrl" type="url" inputmode="url" placeholder="https://script.google.com/macros/s/…" />
+        </div>
+        <div class="field">
+          <label for="suSecret">Shared secret</label>
+          <input id="suSecret" type="text" autocomplete="off" placeholder="Only if you set SECRET_KEY" />
+        </div>
+        <div class="nav">
+          <button class="btn plain" id="suTestGs" type="button">Test connection</button>
+        </div>
+        <p class="note" id="st3"></p>
+        <div class="nav">
+          <button class="btn plain" id="suBack2" type="button">Back</button>
+          <button class="btn" id="suTo4" type="button">Save &amp; continue</button>
+        </div>
+      </section>
+
+      <!-- Step 4: social (optional) -->
+      <section class="card step" id="step4">
+        <h2>Social</h2>
+        <p class="sub">Optional. Skip it and the tool still works.</p>
+        <div class="field">
+          <label for="suWebhook">Make webhook URL</label>
+          <input id="suWebhook" type="url" inputmode="url" placeholder="Paste a Make webhook URL, or leave blank" />
+        </div>
+        <p class="note"><a href="MAKE_SCENARIO.md" target="_blank" rel="noopener">Make scenario</a> · Google Business Profile needs <a href="DIRECT_API.md" target="_blank" rel="noopener">Basic API Access</a> first. If you already deployed the script, paste this URL into MAKE_WEBHOOK_URL there and redeploy.</p>
+        <div class="nav">
+          <button class="btn plain" id="suBack3" type="button">Back</button>
+          <button class="btn" id="suTo5" type="button">Save</button>
+          <button class="btn plain" id="suSkipSocial" type="button">Skip</button>
+        </div>
+        <p class="note" id="st4"></p>
+      </section>
+
+      <!-- Step 5: done -->
+      <section class="card step" id="step5">
+        <h2>Done</h2>
+        <p class="sub">Your workspace is ready.</p>
+        <ul class="summary" id="suSummary"></ul>
+        <div class="nav">
+          <button class="btn" id="suOpen" type="button">Open Main Eventer</button>
+          <button class="btn plain" id="suEditBiz" type="button">Edit business details</button>
+        </div>
+        <p class="note" id="st5"></p>
+      </section>
+
+      <footer class="fineprint"><a href="index.html">Main Eventer</a> · <a href="manual.html">Help</a></footer>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+      "use strict";
+      /* ---------- pure helpers (no DOM, no Firebase) ---------- */
+      function isStudioEmail(email) {
+        return ["kylematthewberry@gmail.com", "rochelleberry731@gmail.com"].indexOf((email || "").toLowerCase()) >= 0;
+      }
+      function extractSheetId(input) {
+        if (!input) return "";
+        var m = String(input).match(/\/d\/([a-zA-Z0-9-_]{20,})/);
+        if (m) return m[1];
+        if (/^[a-zA-Z0-9-_]{20,}$/.test(String(input).trim())) return String(input).trim();
+        return "";
+      }
+      function suggestHashtags(name) {
+        var words = String(name || "").split(/[^A-Za-z0-9]+/).filter(Boolean);
+        if (!words.length) return "";
+        return "#" + words.map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join("");
+      }
+      function personalizeCodeGs(src, o) {
+        var out = String(src || "");
+        function setVar(name, val) {
+          if (!val) return;
+          out = out.replace("var " + name + ' = "";',
+            "var " + name + ' = "' + String(val).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '";');
+        }
+        setVar("SHEET_ID", o.sheetId);
+        setVar("CALENDAR_ID", o.calendarId);
+        setVar("MAKE_WEBHOOK_URL", o.makeWebhookUrl);
+        setVar("SECRET_KEY", o.secretKey);
+        if (o.timezone) out = out.replace("Set the script timezone to America/Indiana/Indianapolis:",
+          "Set the script timezone to " + o.timezone + ":");
+        return out;
+      }
+      function testSummary(d) {
+        if (!d || d.ok !== true) return { ok: false };
+        return { ok: true, sheet: !!d.sheet, calendar: !!d.calendar, make: !!d.make, versioned: d.version != null };
+      }
+      function pingSummary(d) {
+        if (!d || d.ok !== true || typeof d.sheet !== "boolean") return { ok: false };
+        return { ok: true, sheet: !!d.sheet, calendar: !!d.calendar, make: !!d.make,
+          sheetError: d.sheetError || "", calendarError: d.calendarError || "" };
+      }
+
+      /* ---------- wizard ---------- */
+      (function () {
+        var FIREBASE_CONFIG = {
+          apiKey: "AIzaSyDcw3y_l_xxvsuoPrEJRQGSLua7CPsoQYo",
+          authDomain: "fired-arts-dashboard.firebaseapp.com",
+          projectId: "fired-arts-dashboard",
+          storageBucket: "fired-arts-dashboard.firebasestorage.app",
+          messagingSenderId: "369187068047",
+          appId: "1:369187068047:web:1305bcbb9f93c2eaadb8fa"
+        };
+        var WS_COLLECTION = "mainEvent_workspaces";
+        var LS_WS = "me_workspace";
+        var LS_SKIP = "me_setup_skipped";
+
+        var TIMEZONES = [
+          ["America/New_York", "Eastern"],
+          ["America/Chicago", "Central"],
+          ["America/Denver", "Mountain"],
+          ["America/Los_Angeles", "Pacific"],
+          ["America/Indiana/Indianapolis", "Indiana"],
+          ["America/Phoenix", "Arizona"],
+          ["America/Anchorage", "Alaska"],
+          ["Pacific/Honolulu", "Hawaii"],
+          ["America/Toronto", "Toronto"],
+          ["America/Mexico_City", "Mexico City"],
+          ["America/Sao_Paulo", "São Paulo"],
+          ["Europe/London", "London"],
+          ["Europe/Paris", "Paris"],
+          ["Europe/Berlin", "Berlin"],
+          ["Asia/Tokyo", "Tokyo"],
+          ["Asia/Singapore", "Singapore"],
+          ["Australia/Sydney", "Sydney"],
+          ["UTC", "UTC"]
+        ];
+
+        var auth = null, db = null, currentUser = null, ws = {};
+        var $ = function (id) { return document.getElementById(id); };
+
+        function note(id, msg, cls) {
+          var el = $(id);
+          if (!el) return;
+          el.textContent = msg || "";
+          el.className = "note" + (cls ? " " + cls : "");
+        }
+
+        function showStep(n) {
+          for (var i = 1; i <= 5; i++) {
+            var s = $("step" + i);
+            if (s) s.classList.toggle("show", i === n);
+          }
+          $("stepLabel").textContent = "Step " + n + " of 5";
+        }
+
+        function loadMirror() {
+          try {
+            var raw = localStorage.getItem(LS_WS);
+            if (raw) ws = JSON.parse(raw) || {};
+          } catch (e) { ws = {}; }
+        }
+        function saveMirror() {
+          try { localStorage.setItem(LS_WS, JSON.stringify(ws)); } catch (e) {}
+        }
+
+        // Saves the workspace: Firestore first, localStorage mirror always.
+        // Returns a promise resolving to true when the cloud save worked.
+        function saveWorkspace(patch) {
+          if (patch) {
+            for (var k in patch) ws[k] = patch[k];
+          }
+          if (currentUser) {
+            ws.ownerUid = currentUser.uid;
+            ws.ownerEmail = currentUser.email || "";
+          }
+          ws.updatedAt = new Date().toISOString();
+          saveMirror();
+          if (!db || !currentUser) return Promise.resolve(false);
+          var data = {};
+          for (var k2 in ws) data[k2] = ws[k2];
+          if (!data.createdAt) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+          return db.collection(WS_COLLECTION).doc(currentUser.uid).set(data, { merge: true }).then(
+            function () { return true; },
+            function () { return false; }
+          );
+        }
+
+        function fillTzSelect() {
+          var sel = $("suTz");
+          TIMEZONES.forEach(function (tz) {
+            var opt = document.createElement("option");
+            opt.value = tz[0];
+            opt.textContent = tz[1] + " — " + tz[0];
+            sel.appendChild(opt);
+          });
+          var detected = "";
+          try { detected = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+          if (TIMEZONES.some(function (tz) { return tz[0] === detected; })) sel.value = detected;
+          else sel.value = "America/New_York";
+        }
+
+        function applyWsToForm() {
+          if (ws.businessName) $("suName").value = ws.businessName;
+          if (ws.location) $("suLocation").value = ws.location;
+          if (ws.timezone) $("suTz").value = ws.timezone;
+          if (ws.defaultHost) $("suHost").value = ws.defaultHost;
+          if (ws.hashtags) $("suTags").value = ws.hashtags;
+          if (ws.sheetId && $("suSheetUrl").value === "") $("suSheetUrl").value = "https://docs.google.com/spreadsheets/d/" + ws.sheetId + "/edit";
+          if (ws.sheetId) $("suSheetId").textContent = "Sheet ID: " + ws.sheetId;
+          if (ws.calendarId) $("suCalId").value = ws.calendarId;
+          if (ws.appsScriptUrl) $("suScriptUrl").value = ws.appsScriptUrl;
+          if (ws.appsScriptKey) $("suSecret").value = ws.appsScriptKey;
+          if (ws.makeWebhookUrl) $("suWebhook").value = ws.makeWebhookUrl;
+          if (ws.timezone) $("suTzEcho").textContent = ws.timezone;
+        }
+
+        function updateSignedInUI() {
+          var btn = $("suAuthBtn"), signed = $("suSignedIn"), cont = $("suContinueRow"), studio = $("suStudio");
+          if (!currentUser) {
+            btn.textContent = "Sign in with Google";
+            signed.style.display = "none"; cont.style.display = "none"; studio.style.display = "none";
+            return;
+          }
+          btn.textContent = "Sign out";
+          $("suEmail").textContent = currentUser.email || "";
+          signed.style.display = "block";
+          if (isStudioEmail(currentUser.email)) {
+            studio.style.display = "block";
+            cont.style.display = "none";
+          } else {
+            studio.style.display = "none";
+            cont.style.display = "flex";
+          }
+        }
+
+        function signInOut() {
+          if (!auth) { note("st1", "Firebase did not load. Check the connection and reload.", "bad"); return; }
+          if (currentUser) { auth.signOut(); return; }
+          var provider = new firebase.auth.GoogleAuthProvider();
+          auth.signInWithPopup(provider).catch(function (err) {
+            note("st1", "Sign-in failed. " + (err && err.message ? err.message : ""), "bad");
+          });
+        }
+
+        function copyText(text, btn) {
+          function done() {
+            var old = btn.textContent;
+            btn.textContent = "Copied"; btn.classList.add("copied");
+            setTimeout(function () { btn.textContent = old; btn.classList.remove("copied"); }, 1600);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+          } else { fallback(); }
+          function fallback() {
+            var ta = document.createElement("textarea");
+            ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand("copy"); } catch (e) {}
+            document.body.removeChild(ta); done();
+          }
+        }
+
+        function renderSummary() {
+          var ul = $("suSummary");
+          ul.innerHTML = "";
+          var rows = [
+            ["Business", ws.businessName || "—"],
+            ["Location", ws.location || "—"],
+            ["Timezone", ws.timezone || "—"],
+            ["Host", ws.defaultHost || "—"],
+            ["Sheet", ws.sheetId ? "Connected" : "Not connected"],
+            ["Calendar", ws.calendarId || "—"],
+            ["Apps Script", ws.appsScriptUrl ? "Connected" : "Not connected"],
+            ["Social", ws.makeWebhookUrl ? "Make webhook set" : "Skipped"]
+          ];
+          rows.forEach(function (r) {
+            var li = document.createElement("li");
+            var b = document.createElement("b");
+            b.textContent = r[0] + ": ";
+            li.appendChild(b);
+            li.appendChild(document.createTextNode(r[1]));
+            ul.appendChild(li);
+          });
+        }
+
+        function finishSetup() {
+          saveWorkspace({ setupComplete: true }).then(function (cloud) {
+            note("st5", cloud ? "Saved." : "Saved on this device only.", cloud ? "good" : "");
+            renderSummary();
+            showStep(5);
+          });
+        }
+
+        function testConnection() {
+          var url = $("suScriptUrl").value.trim();
+          if (!url) { note("st3", "Paste the web app URL first.", "bad"); return; }
+          note("st3", "Testing…");
+          fetch(url, { method: "GET" }).then(function (res) { return res.json(); }).then(function (data) {
+            var s = testSummary(data);
+            if (!s.ok) { note("st3", "That URL didn't answer. Check the URL and the deployment.", "bad"); return; }
+            var bits = [];
+            bits.push(s.sheet ? "Sheet ✓" : "Sheet — not set in the script");
+            bits.push(s.calendar ? "Calendar ✓" : "Calendar — not set in the script");
+            if (s.make) bits.push("Make ✓");
+            if (!s.versioned) {
+              note("st3", "Connected. " + bits.join(" · ") + " — older Code.gs: re-paste the latest file for the full check.", "good");
+              return;
+            }
+            // Current Code.gs: run the write-free ping for a validated check.
+            fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "ping" })
+            }).then(function (res2) { return res2.json(); }).then(function (data2) {
+              var p = pingSummary(data2);
+              if (!p.ok) { note("st3", "Connected. " + bits.join(" · ") + ".", "good"); return; }
+              var pb = [];
+              pb.push(p.sheet ? "Sheet ✓ readable" : "Sheet — can't open it" + (p.sheetError ? ": " + p.sheetError : ""));
+              pb.push(p.calendar ? "Calendar ✓" : "Calendar — can't open it" + (p.calendarError ? ": " + p.calendarError : ""));
+              if (p.make) pb.push("Make ✓");
+              note("st3", "Connected. " + pb.join(" · ") + ".", "good");
+            }).catch(function () {
+              note("st3", "Connected. " + bits.join(" · ") + ".", "good");
+            });
+          }).catch(function () {
+            note("st3", "That URL didn't answer. Check the URL and the deployment.", "bad");
+          });
+        }
+
+        function initFirebase() {
+          if (typeof firebase === "undefined") { note("st1", "Firebase did not load. Check the connection and reload.", "bad"); return; }
+          firebase.initializeApp(FIREBASE_CONFIG);
+          auth = firebase.auth();
+          db = firebase.firestore();
+          auth.onAuthStateChanged(function (user) {
+            currentUser = user;
+            updateSignedInUI();
+            if (user && !isStudioEmail(user.email)) {
+              // Load their workspace (cloud first, device mirror as fallback).
+              db.collection(WS_COLLECTION).doc(user.uid).get().then(function (doc) {
+                if (doc.exists) {
+                  ws = doc.data() || {};
+                  saveMirror();
+                  applyWsToForm();
+                  if (ws.setupComplete) { renderSummary(); showStep(5); }
+                } else {
+                  loadMirror();
+                  applyWsToForm();
+                }
+              }, function () {
+                loadMirror();
+                applyWsToForm();
+              });
+            }
+          });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+          fillTzSelect();
+          loadMirror();
+          applyWsToForm();
+
+          $("suAuthBtn").addEventListener("click", signInOut);
+          $("suSignOut").addEventListener("click", signInOut);
+          $("suTo2").addEventListener("click", function () { showStep(2); });
+          $("suBack1").addEventListener("click", function () { showStep(1); });
+          $("suBack2").addEventListener("click", function () { showStep(2); });
+          $("suBack3").addEventListener("click", function () { showStep(3); });
+
+          var tagsTouched = false;
+          $("suTags").addEventListener("input", function () { tagsTouched = true; });
+          $("suName").addEventListener("input", function () {
+            if (!tagsTouched) $("suTags").value = suggestHashtags($("suName").value);
+          });
+          $("suTz").addEventListener("change", function () { $("suTzEcho").textContent = $("suTz").value; });
+          $("suTzEcho").textContent = $("suTz").value;
+
+          $("suSkip").addEventListener("click", function (e) {
+            e.preventDefault();
+            try { localStorage.setItem(LS_SKIP, "1"); } catch (err) {}
+            location.href = "index.html";
+          });
+
+          $("suTo3").addEventListener("click", function () {
+            if (!currentUser) { note("st2", "Sign in first.", "bad"); return; }
+            var patch = {
+              businessName: $("suName").value.trim(),
+              location: $("suLocation").value.trim(),
+              timezone: $("suTz").value,
+              defaultHost: $("suHost").value.trim(),
+              hashtags: $("suTags").value.trim()
+            };
+            saveWorkspace(patch).then(function (cloud) {
+              note("st2", cloud ? "Saved." : "Saved on this device only.", cloud ? "good" : "");
+              $("suTzEcho").textContent = patch.timezone;
+              if (!$("suCalId").value.trim() && currentUser.email) $("suCalId").value = currentUser.email;
+              showStep(3);
+            });
+          });
+
+          $("suUseSheet").addEventListener("click", function () {
+            var id = extractSheetId($("suSheetUrl").value);
+            if (!id) { note("suSheetId", "That link didn't have a Sheet ID.", "bad"); return; }
+            ws.sheetId = id;
+            saveMirror();
+            var sidEl = $("suSheetId");
+            sidEl.textContent = "Sheet ID: " + id;
+            sidEl.className = "note good";
+          });
+
+          $("suCopyGs").addEventListener("click", function () {
+            var btn = $("suCopyGs");
+            fetch("Code.gs").then(function (res) { return res.text(); }).then(function (src) {
+              var out = personalizeCodeGs(src, {
+                sheetId: ws.sheetId || extractSheetId($("suSheetUrl").value),
+                calendarId: $("suCalId").value.trim(),
+                timezone: ws.timezone || $("suTz").value,
+                makeWebhookUrl: ws.makeWebhookUrl || $("suWebhook").value.trim(),
+                secretKey: $("suSecret").value.trim()
+              });
+              copyText(out, btn);
+              note("st3", "Code.gs copied — your IDs are already filled in.", "good");
+            }).catch(function () {
+              note("st3", "Couldn't load Code.gs. Use the download link.", "bad");
+            });
+          });
+
+          $("suTestGs").addEventListener("click", testConnection);
+
+          $("suTo4").addEventListener("click", function () {
+            if (!currentUser) { note("st3", "Sign in first.", "bad"); return; }
+            var patch = {
+              sheetId: ws.sheetId || extractSheetId($("suSheetUrl").value),
+              calendarId: $("suCalId").value.trim(),
+              appsScriptUrl: $("suScriptUrl").value.trim(),
+              appsScriptKey: $("suSecret").value.trim()
+            };
+            saveWorkspace(patch).then(function (cloud) {
+              note("st3", cloud ? "Saved." : "Saved on this device only.", cloud ? "good" : "");
+              showStep(4);
+            });
+          });
+
+          $("suTo5").addEventListener("click", function () {
+            if (!currentUser) { note("st4", "Sign in first.", "bad"); return; }
+            saveWorkspace({ makeWebhookUrl: $("suWebhook").value.trim() }).then(function () { finishSetup(); });
+          });
+          $("suSkipSocial").addEventListener("click", function () {
+            if (!currentUser) { note("st4", "Sign in first.", "bad"); return; }
+            saveWorkspace({}).then(function () { finishSetup(); });
+          });
+
+          $("suOpen").addEventListener("click", function () { location.href = "index.html"; });
+          $("suEditBiz").addEventListener("click", function () { showStep(2); });
+
+          initFirebase();
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -18,8 +18,10 @@ already written. Live at https://main-eventer.netlify.app.
   pick its channel, and it flags date, day of week, times, price,
   ages, and host as Match, Conflict, or Not stated. Fields the record
   leaves blank are skipped, never conflicts.
-- **Saved events** — sign in with Google (studio accounts only) to save
+- **Saved events** — sign in with Google (any account) to save
   event records to Firestore, load them back, and delete them.
+  Studio accounts get the Fired Arts workspace; everyone else gets
+  their own personal workspace, set up by the setup wizard.
 - **Google push** — "Push to Google" sends the record to a Google Apps
   Script web app, which appends the Sheet row and creates the Calendar
   event (and triggers Make, if configured). Needs the Apps Script setup
@@ -33,6 +35,10 @@ Full documentation: `DOCUMENTATION.md` (same content as `manual.html`).
 ## Files
 
 - `index.html` — the whole app (single static page).
+- `setup.html` — the setup wizard for new users (five steps: sign
+  in, business details, Google, social, done).
+- `SETUP.md` — what the wizard automates, what stays manual, and
+  what would fully automate it.
 - `manual.html` — the help/manual page.
 - `DOCUMENTATION.md` — the documentation.
 - `Code.gs` — the Google Apps Script web app (Sheet + Calendar push,
@@ -48,12 +54,42 @@ Full documentation: `DOCUMENTATION.md` (same content as `manual.html`).
 ## Firebase
 
 - Project: `fired-arts-dashboard` (shared with Arts Fired).
-- Collection: `mainEvent_events` — one doc per saved event record.
-- Sign-in: Google, allowlisted to `kylematthewberry@gmail.com` and
-  `rochelleberry731@gmail.com`. The same allowlist is enforced by the
-  Firestore rules, so the client-side check is only for the message.
-- The Netlify domain (`main-eventer.netlify.app`) is in the Firebase
-  Auth authorized-domains list.
+- Studio collection: `mainEvent_events` — one doc per saved event
+  record, read/write restricted to `kylematthewberry@gmail.com` and
+  `rochelleberry731@gmail.com`.
+- Personal workspaces: `mainEvent_workspaces/{uid}` — one doc per
+  user (doc id is the Firebase Auth uid), with an `events`
+  subcollection. Owner-scoped rules: any signed-in Google user can
+  read/write only their own doc and its events. No allowlist.
+- Sign-in: Google, any account. Studio accounts get the Fired Arts
+  workspace; everyone else gets a personal workspace via the setup
+  wizard (`setup.html`). The Netlify domain
+  (`main-eventer.netlify.app`) is in the Firebase Auth
+  authorized-domains list.
+
+## Setup wizard (for any user)
+
+`setup.html` — five steps, no account needed beyond Google sign-in:
+
+1. **Sign in** — any Google account. Studio accounts are told
+   they're already set up and sent to the tool.
+2. **Business** — name, location, timezone, default host, hashtags
+   (suggested from the business name). Saved to the user's workspace.
+3. **Google** — create a Sheet (one click), paste its link (the ID
+   is extracted), Calendar ID (prefilled with their email — their
+   primary calendar), then copy a personalized `Code.gs` (their Sheet
+   and Calendar IDs already filled in), paste it into a new Apps
+   Script project, deploy as a web app, paste the URL back, and test
+   the connection (read-only check, then a write-free ping).
+4. **Social** — optional, skippable. A Make webhook URL for the
+   social fan-out (see `MAKE_SCENARIO.md`); Google Business Profile
+   needs Basic API Access approval first (see `DIRECT_API.md`).
+5. **Done** — summary, then into the tool with their defaults in
+   place (location/host prefilled, their hashtags, their timezone,
+   their Apps Script wired for Push to Google).
+
+What the wizard automates vs what stays manual, and the backend
+that would fully automate it, are in `SETUP.md`.
 
 ## Hybrid setup (one-time)
 

@@ -19,6 +19,14 @@
  *     If SECRET_KEY is set here, paste the same value into
  *     APPS_SCRIPT_KEY in index.html.
  *
+ * Setup-wizard users: the wizard at /setup.html fills in SHEET_ID,
+ * CALENDAR_ID, and MAKE_WEBHOOK_URL for you (and the script timezone
+ * in step 2) — paste the generated file as-is.
+ *
+ * Health check: GET the web app URL (doGet below) or POST
+ * {"action":"ping"} — both answer with the config status and write
+ * nothing. The wizard uses this to test the connection.
+ *
  * The tool calls this endpoint with Content-Type: text/plain (not
  * application/json) so the browser does not send a CORS preflight,
  * which Apps Script web apps do not answer. The body is still a JSON
@@ -43,6 +51,7 @@ function doGet() {
   return jsonOut({
     ok: true,
     service: "Main Eventer Apps Script",
+    version: 2,
     sheet: !!SHEET_ID,
     calendar: !!CALENDAR_ID,
     make: !!MAKE_WEBHOOK_URL
@@ -53,6 +62,19 @@ function doPost(e) {
   var result = { ok: false };
   try {
     var data = JSON.parse((e.postData && e.postData.contents) || "{}");
+    if (data.action === "ping") {
+      // Health check: answers the config status, writes nothing.
+      var ping = { ok: true, service: "Main Eventer Apps Script", sheet: false, calendar: false, make: !!MAKE_WEBHOOK_URL };
+      if (SHEET_ID) {
+        try { SpreadsheetApp.openById(SHEET_ID); ping.sheet = true; }
+        catch (err) { ping.sheetError = String(err && err.message ? err.message : err); }
+      }
+      if (CALENDAR_ID) {
+        try { ping.calendar = !!CalendarApp.getCalendarById(CALENDAR_ID); }
+        catch (err) { ping.calendarError = String(err && err.message ? err.message : err); }
+      }
+      return jsonOut(ping);
+    }
     if (SECRET_KEY && data.key !== SECRET_KEY) {
       result.error = "unauthorized";
       return jsonOut(result);
