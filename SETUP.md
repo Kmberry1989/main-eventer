@@ -3,7 +3,7 @@
 The setup wizard (`setup.html`) lets any Google user set Main
 Eventer up for their own events. The Fired Arts studio workspace is
 untouched: studio accounts (`kylematthewberry@gmail.com`,
-`rochelleberry731@gmail.com`) never see the wizard and keep the
+`rochelleberry731@gmail.com`, `media@firedartsstudio.com`) never see the wizard and keep the
 existing `mainEvent_events` collection and the existing Apps Script
 endpoint.
 

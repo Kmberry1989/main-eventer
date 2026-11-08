@@ -55,8 +55,8 @@ Full documentation: `DOCUMENTATION.md` (same content as `manual.html`).
 
 - Project: `fired-arts-dashboard` (shared with Arts Fired).
 - Studio collection: `mainEvent_events` — one doc per saved event
-  record, read/write restricted to `kylematthewberry@gmail.com` and
-  `rochelleberry731@gmail.com`.
+  record, read/write restricted to `kylematthewberry@gmail.com`,
+  `rochelleberry731@gmail.com`, and `media@firedartsstudio.com`.
 - Personal workspaces: `mainEvent_workspaces/{uid}` — one doc per
   user (doc id is the Firebase Auth uid), with an `events`
   subcollection. Owner-scoped rules: any signed-in Google user can

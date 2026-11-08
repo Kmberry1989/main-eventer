@@ -155,8 +155,8 @@ something was left out.
 ## Saved events
 
 **Sign in with Google** (top of the page) signs in with any Google
-account. Studio accounts (`kylematthewberry@gmail.com` and
-`rochelleberry731@gmail.com`) get the Fired Arts workspace; everyone
+account. Studio accounts (`kylematthewberry@gmail.com`,
+`rochelleberry731@gmail.com`, and `media@firedartsstudio.com`) get the Fired Arts workspace; everyone
 else gets their own personal workspace, set up on first sign-in by the
 [setup wizard](setup.html). Each workspace sees only its own saved
 events.

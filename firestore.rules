@@ -337,13 +337,14 @@ service cloud.firestore {
     // auditResolutions: one doc per issue, doc id = issue number ("1".."19").
     // Fields: resolved (boolean), resolvedAt, resolvedBy (email), note.
     // Public read so the report page can show resolution state; writes
-    // restricted to Kyle and Rochelle (lowercased email match).
+    // restricted to Kyle, Rochelle, and the studio media account (lowercased email match).
     function isAuditWriter() {
       return request.auth != null
         && request.auth.token.email != null
         && request.auth.token.email.lower() in [
           "kylematthewberry@gmail.com",
-          "rochelleberry731@gmail.com"
+          "rochelleberry731@gmail.com",
+          "media@firedartsstudio.com"
         ];
     }
 
@@ -359,7 +360,7 @@ service cloud.firestore {
     // mainEvent_events: one doc per saved event record.
     // Fields: title, date, startTime, endTime, price, ages, location,
     // description, link, createdAt, updatedAt, createdBy (email).
-    // Read/write restricted to Kyle and Rochelle (same allowlist as the audit).
+    // Read/write restricted to Kyle, Rochelle, and the studio media account (same allowlist as the audit).
     match /mainEvent_events/{eventId} {
       allow read, write: if isAuditWriter();
     }
