@@ -27,6 +27,23 @@
  * {"action":"ping"} — both answer with the config status and write
  * nothing. The wizard uses this to test the connection.
  *
+ * Actions the tool can POST:
+ *  - {"action":"ping"} — write-free health check (no secret needed).
+ *  - {"action":"listCalendars", "key": SECRET_KEY} — returns the
+ *    calendars this account can write to, as
+ *    {ok:true, calendars:[{id, name, primary}]}. "primary" marks the
+ *    configured default calendar (CALENDAR_ID below, or the account's
+ *    default calendar when CALENDAR_ID is empty). Needs the secret,
+ *    like a push. Scripts older than version 3 do not know this
+ *    action and treat it as a push — the tool only sends it to a
+ *    script whose GET reports version 3 or higher.
+ *  - a push payload (no "action", or any other action) — appends the
+ *    sheet row, creates the calendar event, and POSTs to Make.
+ *    A push may include an optional "calendarId": the event is
+ *    created on that calendar instead of CALENDAR_ID. An unknown or
+ *    empty calendarId falls back to CALENDAR_ID, so older tools that
+ *    never send calendarId keep working unchanged.
+ *
  * The tool calls this endpoint with Content-Type: text/plain (not
  * application/json) so the browser does not send a CORS preflight,
  * which Apps Script web apps do not answer. The body is still a JSON
@@ -51,7 +68,7 @@ function doGet() {
   return jsonOut({
     ok: true,
     service: "Main Eventer Apps Script",
-    version: 2,
+    version: 3,
     sheet: !!SHEET_ID,
     calendar: !!CALENDAR_ID,
     make: !!MAKE_WEBHOOK_URL
@@ -78,6 +95,11 @@ function doPost(e) {
     if (SECRET_KEY && data.key !== SECRET_KEY) {
       result.error = "unauthorized";
       return jsonOut(result);
+    }
+    if (data.action === "listCalendars") {
+      // Read-only list of the account's calendars. No sheet row, no
+      // event, no Make post — and no lock needed.
+      return jsonOut(listCalendars());
     }
     if (!SHEET_ID && !CALENDAR_ID) {
       result.error = "not configured";
@@ -174,6 +196,41 @@ function appendSheetRow(data) {
   return { ok: true, row: sheet.getLastRow() };
 }
 
+function listCalendars() {
+  var out = { ok: true, calendars: [] };
+  try {
+    var defId = "";
+    try { defId = CalendarApp.getDefaultCalendar().getId(); } catch (e) {}
+    // "primary" = the configured default: CALENDAR_ID when set, else
+    // the account's default calendar. That is the calendar pushes use
+    // when the tool sends no calendarId.
+    var primaryId = CALENDAR_ID || defId;
+    var cals = CalendarApp.getAllCalendars();
+    for (var i = 0; i < cals.length; i++) {
+      var c = cals[i];
+      var id = "";
+      try { id = c.getId(); } catch (e) { continue; }
+      var name = id;
+      try { name = c.getName() || id; } catch (e) {}
+      out.calendars.push({ id: id, name: name, primary: id === primaryId });
+    }
+    // If the configured calendar is not in the list (e.g. shared with
+    // the account but not returned here), still offer it first so the
+    // picker can show the calendar pushes already use.
+    var seen = false;
+    for (var j = 0; j < out.calendars.length; j++) {
+      if (out.calendars[j].id === primaryId) { seen = true; break; }
+    }
+    if (CALENDAR_ID && !seen) {
+      out.calendars.unshift({ id: CALENDAR_ID, name: CALENDAR_ID, primary: true });
+    }
+  } catch (err) {
+    out.ok = false;
+    out.error = String(err && err.message ? err.message : err);
+  }
+  return out;
+}
+
 function createCalendarEvent(data) {
   if (!CALENDAR_ID) return { ok: false, skipped: true, reason: "no calendar configured" };
   var dp = parseDateParts(data.date);
@@ -184,12 +241,21 @@ function createCalendarEvent(data) {
   var en = parseTimeParts(data.endTime);
   var start = makeDate(dp, st);
   var end = en ? makeDate(dp, en) : new Date(start.getTime() + 60 * 60 * 1000);
-  var cal = CalendarApp.getCalendarById(CALENDAR_ID);
+  // A push may name its own calendar; anything unknown or empty falls
+  // back to the configured CALENDAR_ID.
+  var calId = (data.calendarId && String(data.calendarId).trim()) || CALENDAR_ID;
+  var cal = null;
+  try { cal = CalendarApp.getCalendarById(calId); } catch (e) { cal = null; }
+  if (!cal && calId !== CALENDAR_ID) {
+    calId = CALENDAR_ID;
+    try { cal = CalendarApp.getCalendarById(calId); } catch (e) { cal = null; }
+  }
+  if (!cal) return { ok: false, skipped: true, reason: "calendar not found: " + calId };
   var ev = cal.createEvent(data.title, start, end, {
     location: data.location || "",
     description: data.calendarDescription || ""
   });
-  return { ok: true, id: ev.getId() };
+  return { ok: true, id: ev.getId(), calendarId: calId };
 }
 
 function postToMake(data) {

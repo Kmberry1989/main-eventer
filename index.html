@@ -343,9 +343,16 @@
 
           <section class="card" id="googleCard">
             <h2>Google</h2>
-            <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <button class="btn" id="meGoogleBtn" type="button">Push to Google</button>
+              <select id="meCalendarSel" aria-label="Google calendar to push to" style="max-width:260px;">
+                <option value="">Configured calendar</option>
+              </select>
             </div>
+            <label style="display:flex; gap:8px; align-items:center; margin-top:12px; font-size:14px;">
+              <input type="checkbox" id="meAutoPush" /> Auto-push to Google Calendar on save
+            </label>
+            <p class="note" id="meCalendarNote" hidden>Calendar list unavailable — pushes use the configured calendar.</p>
           </section>
 
           <section class="card">
@@ -951,7 +958,7 @@
       personalWorkspace = null;
       updateAuthUI();
       if (!user) return;
-      if (isStudio) { loadSavedList(); return; }
+      if (isStudio) { loadSavedList(); loadPushCalendars(); return; }
       loadPersonalWorkspace();
     });
   }
@@ -973,6 +980,125 @@
     return (personalWorkspace && personalWorkspace.appsScriptKey) || "";
   }
 
+  // --- Auto-push + calendar picker (Google Calendar) ---
+  // Auto-push is OFF by default. The toggle and the chosen calendar
+  // live in localStorage; personal workspaces also mirror them into
+  // the workspace doc (studio users have no workspace doc, so
+  // localStorage is their only store).
+  var LS_AUTOPUSH = "me_autopush";
+  var LS_PUSH_CAL = "me_push_calendar_id";
+  var pushCalendarsLoaded = false, pushCalendarsLoading = false;
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // Best-effort mirror of a preference into the personal workspace doc.
+  function savePersonalPref(patch) {
+    if (isStudio || !currentUser || !db) return;
+    try {
+      if (personalWorkspace) {
+        for (var k in patch) personalWorkspace[k] = patch[k];
+        lsSet(LS_WS, JSON.stringify(personalWorkspace));
+      }
+      db.collection(WS_COLLECTION).doc(currentUser.uid).set(patch, { merge: true }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function autoPushEnabled() {
+    var box = $("meAutoPush");
+    if (box) return !!box.checked;
+    return lsGet(LS_AUTOPUSH) === "1";
+  }
+
+  function savedPushCalendarId() {
+    if (personalWorkspace && personalWorkspace.pushCalendarId) return String(personalWorkspace.pushCalendarId);
+    return lsGet(LS_PUSH_CAL) || "";
+  }
+
+  function selectedPushCalendarId() {
+    var sel = $("meCalendarSel");
+    return sel ? sel.value || "" : savedPushCalendarId();
+  }
+
+  // Apply the stored toggle + calendar choice to the controls. The
+  // workspace doc wins over localStorage when it has a value.
+  function applyPushPrefs() {
+    var box = $("meAutoPush");
+    if (box) {
+      var on = false;
+      if (personalWorkspace && typeof personalWorkspace.autoPush === "boolean") on = personalWorkspace.autoPush;
+      else on = lsGet(LS_AUTOPUSH) === "1";
+      box.checked = on;
+    }
+    if (pushCalendarsLoaded) {
+      var sel = $("meCalendarSel");
+      if (sel) {
+        var saved = savedPushCalendarId(), found = false;
+        for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === saved) { found = true; break; } }
+        if (saved && found) sel.value = saved;
+      }
+    }
+  }
+
+  function showCalendarNote(show) {
+    var note = $("meCalendarNote");
+    if (note) note.hidden = !show;
+  }
+
+  function populatePushCalendars(cals) {
+    var sel = $("meCalendarSel");
+    if (!sel) return;
+    sel.innerHTML = "";
+    var def = document.createElement("option");
+    def.value = ""; def.textContent = "Configured calendar";
+    sel.appendChild(def);
+    cals.forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c.id; o.textContent = c.name || c.id;
+      sel.appendChild(o);
+    });
+    // Preselect: the saved choice when it is still in the list, else
+    // the configured/default calendar the script flagged, else the
+    // "Configured calendar" default (empty value = CALENDAR_ID).
+    var saved = savedPushCalendarId(), pick = "";
+    cals.forEach(function (c) { if (saved && c.id === saved) pick = saved; });
+    if (!pick) cals.forEach(function (c) { if (c.primary) pick = c.id; });
+    sel.value = pick;
+    pushCalendarsLoaded = true;
+    showCalendarNote(false);
+  }
+
+  function loadPushCalendars() {
+    if (pushCalendarsLoaded || pushCalendarsLoading) return;
+    var url = pushUrl();
+    if (!url) return; // No endpoint yet (personal workspace still loading); retried after workspace load.
+    pushCalendarsLoading = true;
+    // GET first: only scripts at version 3+ know listCalendars. The old
+    // deployed script would treat the action as a push (and append an
+    // empty sheet row), so never send it to a script that does not
+    // advertise the action. A failed or old-version answer leaves the
+    // picker on its default and pushes keep using CALENDAR_ID.
+    fetch(url, { method: "GET" }).then(function (res) { return res.json(); }).then(function (info) {
+      if (!info || info.ok !== true || !(info.version >= 3)) { pushCalendarsLoading = false; showCalendarNote(true); return; }
+      return fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "listCalendars", key: pushKey() || "" })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        pushCalendarsLoading = false;
+        if (data && data.ok && data.calendars && data.calendars.length) populatePushCalendars(data.calendars);
+        else showCalendarNote(true);
+      });
+    }).catch(function () { pushCalendarsLoading = false; showCalendarNote(true); });
+  }
+
+  // The push guard, shared by the manual button and auto-push: the
+  // record needs a name, date, and start time.
+  function canPushToGoogle() {
+    var r = getRecord();
+    return !!(r.fTitle && r.dateObj && r.startMin != null);
+  }
+
   function applyWorkspace() {
     if (!personalWorkspace) return;
     if (personalWorkspace.hashtags) {
@@ -983,6 +1109,7 @@
     var hostEl = $("fHost"), locEl = $("fLocation");
     if (hostEl && !hostEl.value.trim() && personalWorkspace.defaultHost) hostEl.value = personalWorkspace.defaultHost;
     if (locEl && !locEl.value.trim() && personalWorkspace.location) locEl.value = personalWorkspace.location;
+    applyPushPrefs();
     render();
   }
 
@@ -1015,6 +1142,7 @@
     } else {
       loadSavedList();
     }
+    loadPushCalendars();
   }
 
   function updateAuthUI() {
@@ -1079,7 +1207,21 @@
     var data = recordFromForm();
     data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
     data.createdBy = currentUser.email;
-    function done() { status("Saved."); loadSavedList(); }
+    function done() {
+      loadSavedList();
+      // Auto-push (off by default): the same push as the manual button,
+      // same payload and endpoint. Only when the record has a name,
+      // date, and start time and an Apps Script URL is connected;
+      // otherwise the save just stands.
+      if (autoPushEnabled() && canPushToGoogle() && pushUrl()) {
+        status("Saved. Pushing to Google…");
+        pushToGoogle({ quiet: true }).then(function (ok) {
+          status(ok ? "Saved. Pushed to Google." : "Saved. Google push failed.");
+        });
+      } else {
+        status("Saved.");
+      }
+    }
     function fail(e) { status("Save failed. " + (e && e.message ? e.message : "")); }
     if (loadedDocId) {
       ref.doc(loadedDocId).set(data, { merge: true }).then(done, fail);
@@ -1120,14 +1262,18 @@
     }, function () { list.innerHTML = '<li class="me-empty">Could not load saved events.</li>'; });
   }
 
-  function pushToGoogle() {
+  // opts.quiet: suppress status updates (auto-push reports its own
+  // "Saved. …" status). Returns a Promise<boolean> for auto-push.
+  function pushToGoogle(opts) {
+    opts = opts || {};
     var r = getRecord();
-    if (!(r.fTitle && r.dateObj && r.startMin != null)) { status("Add a name, date, and start time to push to Google."); return; }
+    if (!canPushToGoogle()) { if (!opts.quiet) status("Add a name, date, and start time to push to Google."); return Promise.resolve(false); }
     var scriptUrl = pushUrl();
-    if (!scriptUrl) { status("Finish setup to connect Google."); return; }
+    if (!scriptUrl) { if (!opts.quiet) status("Finish setup to connect Google."); return Promise.resolve(false); }
     var fbPre = $("pre-facebook"), thPre = $("pre-threads"), gcalPre = $("pre-gcal");
     var payload = {
       key: pushKey() || "",
+      calendarId: selectedPushCalendarId(),
       title: r.fTitle,
       date: r.fDate,
       startTime: r.fStart,
@@ -1145,14 +1291,15 @@
     // text/plain (not application/json) so the browser sends no CORS
     // preflight, which Apps Script web apps do not answer. The body is
     // still a JSON string; Code.gs parses it.
-    fetch(scriptUrl, {
+    return fetch(scriptUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     }).then(function (res) { return res.json(); }).then(function (data) {
-      if (data && data.ok) { status("Pushed to Google."); }
-      else { status("Google push failed." + (data && data.error ? " " + data.error : "")); }
-    }).catch(function () { status("Google push failed."); });
+      var ok = !!(data && data.ok);
+      if (!opts.quiet) status(ok ? "Pushed to Google." : "Google push failed." + (data && data.error ? " " + data.error : ""));
+      return ok;
+    }).catch(function () { if (!opts.quiet) status("Google push failed."); return false; });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -1163,7 +1310,19 @@
     var newBtn = $("meNewBtn");
     if (newBtn) newBtn.addEventListener("click", clearForm);
     var googleBtn = $("meGoogleBtn");
-    if (googleBtn) googleBtn.addEventListener("click", pushToGoogle);
+    if (googleBtn) googleBtn.addEventListener("click", function () { pushToGoogle(); });
+    applyPushPrefs();
+    var autoBox = $("meAutoPush");
+    if (autoBox) autoBox.addEventListener("change", function () {
+      lsSet(LS_AUTOPUSH, autoBox.checked ? "1" : "0");
+      savePersonalPref({ autoPush: autoBox.checked });
+    });
+    var calSel = $("meCalendarSel");
+    if (calSel) calSel.addEventListener("change", function () {
+      lsSet(LS_PUSH_CAL, calSel.value || "");
+      savePersonalPref({ pushCalendarId: calSel.value || "" });
+    });
+    loadPushCalendars();
     var tut = $("tutBackdrop");
     if (tut) {
       var seenTut = false;
